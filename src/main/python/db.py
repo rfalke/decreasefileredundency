@@ -23,6 +23,7 @@ CREATE TABLE file (
   dirid INTEGER NOT NULL,
   name TEXT NOT NULL,
   contentid INTEGER NOT NULL,
+  mtime INTEGER NOT NULL,
   UNIQUE (dirid, name)
 )''')
             self.conn.execute('''
@@ -55,20 +56,21 @@ CREATE TABLE content (
             assert id
             return id
         
-    def insert_or_update_file(self,dirid,filename,contentid):
-        c=self.conn.execute('INSERT OR REPLACE INTO file VALUES (NULL, ?,?,?)', [dirid,filename,contentid])
+    def insert_or_update_file(self,dirid,filename,contentid,mtime):
+        c=self.conn.execute('INSERT OR REPLACE INTO file VALUES (NULL, ?,?,?,?)', [dirid,filename,contentid,mtime])
 
         id=c.lastrowid
         assert id
         return id
 
     def get_file(self, dirid, filename):
-        rs=self.conn.execute('SELECT file.id,content.size FROM file,content WHERE dirid=? and name=? and file.contentid=content.id',
+        rs=self.conn.execute('SELECT file.id,content.size,file.mtime FROM file,content WHERE dirid=? and name=? and file.contentid=content.id',
                              [dirid, filename]).fetchone()
         if rs:
             result=File()
-            result.size=rs[1]
             result.id=rs[0]
+            result.size=rs[1]
+            result.mtime=rs[2]
             return result
         return None
 

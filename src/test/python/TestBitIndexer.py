@@ -3,11 +3,11 @@ from bit_indexer import BitIndexer
 from tempdir import TempDir
 import db
 import random
-import os,unittest,sqlite3
+import os,unittest,sqlite3,time
 
 class Test(unittest.TestCase):
 
-    def test_shuffle(self):
+    def test_simple(self):
         with TempDir() as d:
             datadir=os.path.join(d.name, 'data')
             subdir1=os.path.join(datadir, 'sub1')
@@ -25,7 +25,7 @@ class Test(unittest.TestCase):
             conn = sqlite3.connect(db_fn)
             self.assertEqual(conn.execute("select * from dir").fetchall(),
                              [(1, datadir), (2, subdir1), (3, subdir2)])
-            self.assertEqual(conn.execute("select * from file").fetchall(),
+            self.assertEqual(conn.execute("select id,dirid,name,contentid from file").fetchall(),
                              [(1, 2, u'input1', 1), (2, 2, u'input2', 2), (3, 3, u'input3', 3)])
             self.assertEqual(conn.execute("select * from content").fetchall(),
                               [(1, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', 1024, u''),
@@ -36,18 +36,38 @@ class Test(unittest.TestCase):
 
             self.assertEqual(conn.execute("select * from dir").fetchall(),
                              [(1, datadir), (2, subdir1), (3, subdir2)])
-            self.assertEqual(conn.execute("select * from file").fetchall(),
+            self.assertEqual(conn.execute("select id,dirid,name,contentid from file").fetchall(),
                              [(1, 2, u'input1', 1), (2, 2, u'input2', 2), (3, 3, u'input3', 3)])
             self.assertEqual(conn.execute("select * from content").fetchall(),
                               [(1, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', 1024, u''),
                                (2, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'409c9978384c2832af4a98bafe453dfdaa8e8054', 1025, u''),
                                (3, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'76f936767b092576521501bdb344aa7a632b88b8', 1026, u'')] )
 
+    def test_content_changes(self):
+        with TempDir() as d:
+            datadir=os.path.join(d.name, 'data')
+            os.makedirs(datadir)
+            self.write_binary(1024, os.path.join(datadir, 'input'))
 
-    def write_binary(self,size,filename):
+            db_fn=os.path.join(d.name, 'files.db')
+            indexer=BitIndexer(db.Database(db_fn,verbose=0),verbose_progress=0)
+            indexer.run([datadir])
+
+            conn = sqlite3.connect(db_fn)
+            self.assertEqual(conn.execute("select contentid,fullsha1 from file,content where file.contentid=content.id").fetchall(),
+                             [(1, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77')])
+
+            time.sleep(2)
+            self.write_binary(1024, os.path.join(datadir, 'input'), offset=1)
+            indexer.run([datadir])
+
+            self.assertEqual(conn.execute("select contentid,fullsha1 from file,content where file.contentid=content.id").fetchall(),
+                             [(2, u'b0f14f1c1d87185bcc46363860b84609d5a2169e')])
+
+    def write_binary(self,size,filename, offset=0):
         f=open(filename,"wb")
         for i in range(size):
-            f.write(chr(i % 256))
+            f.write(chr((i+offset) % 256))
         f.close()
         assert os.path.getsize(filename)==size
 

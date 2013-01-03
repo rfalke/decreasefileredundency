@@ -41,16 +41,23 @@ class BitIndexer:
 
         for filename in filenames:
             fullpath=os.path.join(dirpath,filename)
-            size=long(os.path.getsize(fullpath))
+            stats=os.stat(fullpath)
+            size=long(stats.st_size)
+            mtime=int(stats.st_mtime)
 
-            if not self.should_index_file(dirpath, filename, size): continue
-            dbfile = self.db.get_file(dirid,filename)
-            if dbfile and dbfile.size==size:
+            if not self.should_index_file(dirpath, filename, size):
                 continue
-
-            self.progress(".")
+            dbfile = self.db.get_file(dirid,filename)
+            if dbfile:
+                if dbfile.mtime==mtime and dbfile.size==size:
+                    continue
+                else:
+                    self.progress("m")
+            else:
+                self.progress(".")
+                
             contentid = self.get_or_insert_content(fullpath, size)
-            self.db.insert_or_update_file(dirid,filename,contentid)
+            self.db.insert_or_update_file(dirid,filename,contentid,mtime)
 
         self.db.commit()
         self.progress("]")
