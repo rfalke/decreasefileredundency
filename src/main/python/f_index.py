@@ -1,7 +1,7 @@
 
 import sys,os
 
-import support,db
+import db,bit_indexer
 
 repo=db.Database()
 
@@ -9,6 +9,5 @@ roots=sys.argv[1:]
 if not roots:
     roots=["."]
 
-for root in roots:
-    for x in os.walk(root):
-        support.index_one_directory(repo, *x)
+indexer=bit_indexer.BitIndexer(repo)
+indexer.run(roots)

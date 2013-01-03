@@ -5,12 +5,12 @@ class File:
     pass
 
 class Database:
-    def __init__(self):
-        db_file="files.db"
+    def __init__(self, db_file="files.db",verbose=1):
         do_init=not os.path.exists(db_file)
         self.conn = sqlite3.connect(db_file)
         if do_init:
-            print "Creating new database '%s'"%db_file
+            if verbose:
+                print "Creating new database '%s'"%db_file
             self.conn.execute('''
 CREATE TABLE dir (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
