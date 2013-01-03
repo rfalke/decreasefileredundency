@@ -7,8 +7,9 @@ creates a (named) directory which is deleted after use.
 All files created within the directory are destroyed
 Might not work on windows when the files are still opened
 """
-    def __init__(self, suffix="", prefix="tmp", basedir=None):
+    def __init__(self, keep=False, suffix="", prefix="tmp", basedir=None):
         self.name = tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=basedir)
+        self.keep=keep
 
     def __del__(self):
         if "name" in self.__dict__:
@@ -23,7 +24,10 @@ Might not work on windows when the files are still opened
     def dissolve(self):
         """remove all files and directories created within the tempdir"""
         if self.name:
-            shutil.rmtree(self.name)
+            if self.keep:
+                print "Will keep "+str(self)+" as requested"
+            else:
+                shutil.rmtree(self.name)
         self.name = ""
 
     def __str__(self):
