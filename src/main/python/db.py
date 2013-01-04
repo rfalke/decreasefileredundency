@@ -1,12 +1,24 @@
 
-import os,sqlite3
+import os,sqlite3,errno
 
+def get_default_db_file():
+    home=os.path.expanduser("~")
+    return os.path.join(home,".dfr","files.db")
+
+def makedirs(dirname):
+    try:
+        os.makedirs(dirname)
+    except OSError as exception:
+        if exception.errno != errno.EEXIST:
+            raise
+        
 class File:
     pass
 
 class Database:
     def __init__(self, db_file="files.db",verbose=1):
         do_init=not os.path.exists(db_file)
+        makedirs(os.path.dirname(db_file))
         self.conn = sqlite3.connect(db_file)
         if do_init:
             if verbose:
@@ -35,7 +47,14 @@ CREATE TABLE content (
   partsha1s TEXT NOT NULL,
   UNIQUE (fullsha1,size)
 )''')
-            
+
+    def begin(self):
+        pass
+
+    def commit(self):
+        self.conn.commit()        
+
+
     def get_or_insert_dir(self, dirname):
         res=self.conn.execute('SELECT id FROM dir WHERE name=?', [dirname]).fetchone()
         if res:
@@ -79,9 +98,3 @@ CREATE TABLE content (
 
     def remove_file(self,dirid,filename):
         self.conn.execute('DELETE FROM file WHERE dirid=? AND name=?', [dirid,filename])
-        
-    def begin(self):
-        pass
-
-    def commit(self):
-        self.conn.commit()        

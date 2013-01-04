@@ -1,13 +1,18 @@
 
-import sys,os
-
+import sys,os,argparse
 import db,bit_indexer
 
-repo=db.Database()
+default_db_file=db.get_default_db_file()
 
-roots=sys.argv[1:]
-if not roots:
-    roots=["."]
+parser = argparse.ArgumentParser(description='Index directories recursive.')
+parser.add_argument('roots', metavar='DIR', nargs='*', default=["."],
+                   help="a directory to index (if not given '.' will be used)")
+parser.add_argument('--db-file', metavar="FILE",dest='db', nargs=1,
+                   default=[default_db_file],
+                   help='the db file (default: '+default_db_file+')')
+
+args = parser.parse_args()
+repo=db.Database(args.db[0])
 
 indexer=bit_indexer.BitIndexer(repo)
-indexer.run(roots)
+indexer.run(args.roots)
