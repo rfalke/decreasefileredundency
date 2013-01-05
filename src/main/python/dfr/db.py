@@ -22,6 +22,42 @@ def makedirs(dirname):
     assert os.path.isdir(dirname)
 
 
+def is_list_or_tuple(arg):
+    return isinstance(arg, (list, tuple)) and not isinstance(arg, basestring)
+
+
+class SelectBuilder:
+    def __init__(self, table, columns):
+        self.table = table
+        self.columns = columns
+        self.where_pairs = []
+        self.sql = None
+
+    def add_where(self, cond, *values):
+        self.where_pairs.append((cond, values))
+
+    def set_sql(self, sql):
+        assert self.sql is None and sql is not None
+        self.sql = sql
+
+    def to_sql(self):
+        if self.sql:
+            return self.sql
+        conds = [x[0] for x in self.where_pairs]
+        if conds:
+            where = " WHERE "+" AND ".join(conds)
+        else:
+            where = ""
+        sql = 'SELECT %s FROM %s %s' % (self.columns, self.table, where)
+        return sql
+
+    def get_args(self):
+        res = []
+        for _, values in self.where_pairs:
+            res += values
+        return res
+
+
 class Repo:
     def __init__(self, conn, table, clazz, attrs):
         self.conn = conn
@@ -33,10 +69,7 @@ class Repo:
         if 0:
             print "Execute %r with parameter=%r" % (sql, parameter)
         try:
-            if parameter is None:
-                return self.conn.execute(sql)
-            else:
-                return self.conn.execute(sql, parameter)
+            return self.conn.execute(sql, parameter)
         except:
             sys.stderr.write("Error: sql=%r with parameter=%r\n" %
                              (sql, parameter))
@@ -63,28 +96,21 @@ class Repo:
                                    values+[obj.id])
             assert cursor.rowcount == 1
 
-    def build_where(self, query):
-        where = []
-        args = []
-        if "id" in query:
-            where.append("id=?")
-            args.append(query["id"])
-            del query["id"]
-        for attr in self.attrs:
+    def build_where(self, query, builder):
+        for attr in ["id"]+self.attrs:
             if attr in query:
-                where.append(attr + "=?")
-                args.append(query[attr])
+                value = query[attr]
+                if is_list_or_tuple(value):
+                    qmarks = ','.join('?'*len(value))
+                    builder.add_where(attr + " IN (%s)" % qmarks, *value)
+                else:
+                    builder.add_where(attr + "=?", value)
                 del query[attr]
-        return where, args
 
     def _execute_select(self, columns, query):
-        where, args = self.build_where(query)
-        if where:
-            cond = " AND ".join(where)
-            sql = 'SELECT %s FROM %s WHERE %s' % (columns, self.table, cond)
-            return self._execute(sql, args)
-        else:
-            return self._execute('SELECT %s FROM %s' % (columns, self.table))
+        builder = SelectBuilder(self.table, columns)
+        self.build_where(query, builder)
+        return self._execute(builder.to_sql(), builder.get_args())
 
     def find_ids(self, **query):
         cursor = self._execute_select("id", query)
@@ -127,10 +153,9 @@ class DirRepo(Repo):
     def __init__(self, conn):
         Repo.__init__(self, conn, "dir", Dir, ["name"])
 
-    def build_where(self, query):
-        where, args = Repo.build_where(self, query)
+    def build_where(self, query, builder):
+        Repo.build_where(self, query, builder)
         assert len(query) == 0
-        return where, args
 
     def construct(self, values):
         id, name = values
@@ -142,10 +167,9 @@ class FileRepo(Repo):
         Repo.__init__(self, conn, "file", File,
                       ["dirid", "name", "mtime", "contentid"])
 
-    def build_where(self, query):
-        where, args = Repo.build_where(self, query)
+    def build_where(self, query, builder):
+        Repo.build_where(self, query, builder)
         assert len(query) == 0
-        return where, args
 
     def construct(self, values):
         id, dirid, name, mtime, contentid = values
@@ -157,10 +181,18 @@ class ContentRepo(Repo):
         Repo.__init__(self, conn, "content", Content,
                       ["size", "fullsha1", "first1ksha1", "partsha1s"])
 
-    def build_where(self, query):
-        where, args = Repo.build_where(self, query)
+    def build_where(self, query, builder):
+        if "at_least_referenced" in query:
+            assert builder.columns == "id"
+            at_least = int(query["at_least_referenced"])
+            builder.set_sql("SELECT contentid " +
+                            "FROM file " +
+                            "GROUP BY contentid " +
+                            "HAVING COUNT(id) >= %d" % at_least)
+            del query["at_least_referenced"]
+        else:
+            Repo.build_where(self, query, builder)
         assert len(query) == 0
-        return where, args
 
     def construct(self, values):
         id, size, fullsha1, first1ksha1, partsha1s = values

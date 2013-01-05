@@ -16,11 +16,10 @@ class Test(TestCase):
 
     def test_simple(self):
         with TempDir() as tmpdir:
-            datadir = join(tmpdir.name, 'data')
-            subdir1 = join(datadir, 'sub1')
-            subdir2 = join(datadir, 'sub2')
-            os.makedirs(subdir1)
-            os.makedirs(subdir2)
+            datadir = tmpdir.create_dir("data")
+            subdir1 = tmpdir.create_dir("data", "sub1")
+            subdir2 = tmpdir.create_dir("data", "sub2")
+
             write_binary(100, join(subdir1, 'small_file'))
             write_binary(1024, join(subdir1, 'input1'))
             write_binary(1025, join(subdir1, 'input2'))
@@ -56,11 +55,10 @@ class Test(TestCase):
 
     def test_removed_file(self):
         with TempDir() as tmpdir:
-            datadir = join(tmpdir.name, 'data')
-            subdir1 = join(datadir, 'sub1')
-            subdir2 = join(datadir, 'sub2')
-            os.makedirs(subdir1)
-            os.makedirs(subdir2)
+            datadir = tmpdir.create_dir("data")
+            subdir1 = tmpdir.create_dir("data", "sub1")
+            subdir2 = tmpdir.create_dir("data", "sub2")
+
             write_binary(1024, join(subdir1, 'input1'))
             write_binary(1025, join(subdir1, 'input2'))
             write_binary(1026, join(subdir2, 'input3'))
@@ -94,8 +92,7 @@ class Test(TestCase):
 
     def test_content_changes(self):
         with TempDir() as tmpdir:
-            datadir = join(tmpdir.name, 'data')
-            os.makedirs(datadir)
+            datadir = tmpdir.create_dir('data')
             write_binary(1024, join(datadir, 'input'))
 
             db_fn = join(tmpdir.name, 'files.sdb')
@@ -115,8 +112,7 @@ class Test(TestCase):
 
     def test_progress_for_coverage(self):
         with TempDir() as tmpdir:
-            datadir = join(tmpdir.name, 'data')
-            os.makedirs(datadir)
+            datadir = tmpdir.create_dir('data')
             write_binary(1024, join(datadir, 'input'))
 
             db_fn = join(tmpdir.name, 'files.sdb')
@@ -127,8 +123,7 @@ class Test(TestCase):
 
     def test_unreadable_file(self):
         with TempDir() as tmpdir:
-            datadir = join(tmpdir.name, 'data')
-            os.makedirs(datadir)
+            datadir = tmpdir.create_dir('data')
             write_binary(1024, join(datadir, 'input'))
             make_unreadable(join(datadir, 'input'))
 
@@ -140,8 +135,7 @@ class Test(TestCase):
 
     def test_other_io_error(self):
         with TempDir() as tmpdir:
-            datadir = join(tmpdir.name, 'data')
-            os.makedirs(datadir)
+            datadir = tmpdir.create_dir('data')
             write_binary(1024, join(datadir, 'input'))
 
             db_fn = join(tmpdir.name, 'files.sdb')
@@ -168,8 +162,7 @@ class Test(TestCase):
 
             for name in names:
                 name = name.replace("/", "")
-                subdir = join(datadir, name)
-                os.makedirs(subdir)
+                subdir = tmpdir.create_dir('data', name)
                 write_binary(1024, join(subdir, name))
 
             db_fn = join(tmpdir.name, 'files.sdb')

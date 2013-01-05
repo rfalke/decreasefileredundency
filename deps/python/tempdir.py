@@ -1,5 +1,6 @@
 import tempfile
 import shutil
+import os
 
 class TempDir(object):
     """ class for temporary directories
@@ -9,7 +10,7 @@ Might not work on windows when the files are still opened
 """
     def __init__(self, keep=False, suffix="", prefix="tmp", basedir=None):
         self.name = tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=basedir)
-        self.keep=keep
+        self.keep = keep
 
     def __del__(self):
         if "name" in self.__dict__:
@@ -36,4 +37,9 @@ Might not work on windows when the files are still opened
         else:
             return "dissolved temporary directory"
 
-
+    def create_dir(self, *parts):
+        assert self.name
+        assert parts
+        dirname = os.path.join(self.name, *parts)
+        os.makedirs(dirname)
+        return dirname

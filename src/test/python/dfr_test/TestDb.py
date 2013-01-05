@@ -78,6 +78,7 @@ class Test(TestCase):
             self.assert_lists_have_same_items(repo.find(), [obj1, obj2])
             self.assert_lists_have_same_items(repo.find(name="foo"), [obj1])
             self.assert_lists_have_same_items(repo.find(name="hello"), [])
+            self.assert_lists_have_same_items(repo.find(id=[1, 2]), [obj1, obj2])
 
             obj1.name = "new"
             repo.save(obj1)
@@ -117,6 +118,7 @@ class Test(TestCase):
             self.assert_lists_have_same_items(repo.find(), [obj1, obj2, obj3])
             self.assert_lists_have_same_items(repo.find(name="foo"), [obj1, obj3])
             self.assert_lists_have_same_items(repo.find(id=2), [obj2])
+            self.assert_lists_have_same_items(repo.find(id=[1, 2]), [obj1, obj2])
             self.assert_lists_have_same_items(repo.find(dirid=1), [obj1, obj2])
             self.assert_lists_have_same_items(repo.find(contentid=5), [obj2, obj3])
             self.assert_lists_have_same_items(repo.find(name="hello"), [])
@@ -134,7 +136,8 @@ class Test(TestCase):
     def test_content_repo(self):
         with TempDir() as tmpdir:
             db_fn = os.path.join(tmpdir.name, 'files.sdb')
-            repo = db.Database(db_fn, verbose=0).content
+            the_db = db.Database(db_fn, verbose=0)
+            repo = the_db.content
 
             obj1 = Content(1, "a", "b", "c")
             self.assertEqual(obj1, Content(1, "a", "b", "c"))
@@ -161,6 +164,7 @@ class Test(TestCase):
             self.assert_lists_have_same_items(repo.find(), [obj1, obj2, obj3])
             self.assert_lists_have_same_items(repo.find(size=1), [obj1, obj3])
             self.assert_lists_have_same_items(repo.find(id=2), [obj2])
+            self.assert_lists_have_same_items(repo.find(id=[1, 2]), [obj1, obj2])
             self.assert_lists_have_same_items(repo.find(fullsha1="a"), [obj1, obj2])
             self.assert_lists_have_same_items(repo.find(partsha1s="e"), [obj2, obj3])
             self.assert_lists_have_same_items(repo.find(size=99), [])
@@ -175,6 +179,13 @@ class Test(TestCase):
 
             repo.delete(obj1)
             self.assert_lists_have_same_items(repo.find_ids(), [2, 3])
+
+            the_db.file.save(File(1, "foo1", 2, 99))
+            the_db.file.save(File(3, "foo2", 4, 99))
+            the_db.file.save(File(5, "foo3", 6, 100))
+
+            self.assert_lists_have_same_items(repo.find_ids(at_least_referenced=1), [99, 100])
+            self.assert_lists_have_same_items(repo.find_ids(at_least_referenced=2), [99])
 
 
 if __name__ == '__main__':
