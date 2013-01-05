@@ -7,27 +7,61 @@ import dfr.db
 from dfr.bit_equal_finder import BitEqualFinder
 
 
-def format_bytes(n):
-    return locale.format('%d', n, 1)
+def format_bytes(bytes):
+    return locale.format('%d', bytes, 1)
+
 
 class InteractiveResolver:
     def __init__(self, dry_run):
         self.dry_run = dry_run
         self.default_preserve = None
 
+    def _evaluate_input(self, input, hardlinked, path1, path2):
+        if input == "a":
+            if hardlinked:
+                print "Error: Will not remove both hardlinked files."
+                return None
+            else:
+                to_delete = [path1, path2]
+        elif input == "s":
+            return []
+        elif input == "1!":
+            to_delete = [path2]
+            self.default_preserve = 1
+        elif input == "2!":
+            to_delete = [path1]
+            self.default_preserve = 2
+        else:
+            try:
+                choice = int(input)
+            except ValueError:
+                return None
+            if choice not in [1, 2]:
+                return None
+            if choice == 1:
+                to_delete = [path2]
+            elif choice == 2:
+                to_delete = [path1]
+            else:
+                assert 0
+        return to_delete
+
+    # pylint: disable=R0913
     def resolve(self, size, hardlinked, path1, path2, context):
         progress = "[%d.%d/%d] " % (
             context.index+1, context.subindex+1, context.size)
 
-        print "\nThe following files are equal and %s bytes large" % format_bytes(size)
+        print "\nThe following files are equal and %s bytes large" % (
+            format_bytes(size))
         while True:
             print "  [1] %s" % path1
             print "  [2] %s" % path2
-            msg=progress+"sPreserve what? Press 1, 2, "
+            msg = progress+"sPreserve what? Press 1, 2, "
             if not hardlinked:
-                msg+="'a' (to delete all), "
-            msg+="'s' (to skip)."
+                msg += "'a' (to delete all), "
+            msg += "'s' (to skip)."
             print msg
+
             if self.default_preserve:
                 if self.default_preserve == 1:
                     to_delete = [path2]
@@ -36,35 +70,14 @@ class InteractiveResolver:
                 else:
                     assert 0
             else:
-                str = raw_input("> ")
+                input = raw_input("> ")
+                to_delete = self._evaluate_input(
+                    input, hardlinked, path1, path2)
+                if to_delete is None:
+                    continue
+                elif to_delete == []:
+                    break
 
-                if str == "a":
-                    if hardlinked:
-                        print "Will not remove both hardlinked files"
-                        continue
-                    else:
-                        to_delete = [path1, path2]
-                elif str == "s":
-                    return
-                elif str == "1!":
-                    to_delete = [path2]
-                    self.default_preserve = 1
-                elif str == "2!":
-                    to_delete = [path1]
-                    self.default_preserve = 2
-                else:
-                    try:
-                        stri = int(str)
-                    except:
-                        continue
-                    if stri not in [1, 2]:
-                        continue
-                    if stri == 1:
-                        to_delete = [path2]
-                    elif stri == 2:
-                        to_delete = [path1]
-                    else:
-                        assert 0
             assert len(to_delete) >= 1
             for path in to_delete:
                 if self.dry_run:
