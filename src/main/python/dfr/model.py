@@ -1,4 +1,5 @@
 
+
 class Dir:
     def __init__(self, name, id=None):
         self.id = id
@@ -8,9 +9,10 @@ class Dir:
         return (self.id == other.id
                 and self.name == other.name)
 
+
 class File:
     # pylint: disable=R0913
-    def __init__(self, dirid, name, mtime, contentid, id = None):
+    def __init__(self, dirid, name, mtime, contentid, id=None):
         self.id = id
         self.dirid = dirid
         self.name = name
@@ -22,11 +24,12 @@ class File:
                 and self.dirid == other.dirid
                 and self.name == other.name
                 and self.mtime == other.mtime
-                and self.contentid == other.contentid)                
+                and self.contentid == other.contentid)
+
 
 class Content:
     # pylint: disable=R0913
-    def __init__(self, size, fullsha1, first1ksha1, partsha1s, id = None):
+    def __init__(self, size, fullsha1, first1ksha1, partsha1s, id=None):
         self.id = id
         self.size = size
         self.fullsha1 = fullsha1

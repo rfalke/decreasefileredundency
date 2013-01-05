@@ -1,9 +1,11 @@
 
-import os, unittest
+import os
+import unittest
 from tempdir import TempDir
 
 from dfr.bit_hashing import get_sha1sums
 from dfr_test.utils import write_binary
+
 
 class Test(unittest.TestCase):
 

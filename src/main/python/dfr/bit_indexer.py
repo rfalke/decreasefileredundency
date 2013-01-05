@@ -1,15 +1,19 @@
 
-import os, sys
+import os
+import sys
 from dfr.bit_hashing import get_sha1sums
 from dfr.model import File, Content
 
 MIN_LENGTH = 1024
 
+
 def abspath(path):
     return os.path.realpath(os.path.abspath(path))
 
+
 def should_index_file(size):
     return size >= MIN_LENGTH
+
 
 class BitIndexer:
     def __init__(self, db, verbose_progress=1):
@@ -21,10 +25,10 @@ class BitIndexer:
             for dirpath, dirnames, filenames in os.walk(root):
                 self.index_one_directory(dirpath, dirnames, filenames)
         self.progress("\n")
-    
+
     def get_or_insert_content(self, fullpath, size):
         first, full, other = get_sha1sums(fullpath, size, MIN_LENGTH)
-        other_hashs = " ".join(["%d:%s"%x for x in other.items()])
+        other_hashs = " ".join(["%d:%s" % x for x in other.items()])
         obj = Content(size, full, first, other_hashs)
         return self.db.get_or_insert_content(obj)
 
@@ -64,7 +68,7 @@ class BitIndexer:
                 self.progress(".")
             else:
                 self.progress("m")
-                
+
             contentid = self.get_or_insert_content(fullpath, size)
             fileobj.contentid = contentid
             fileobj.mtime = mtime

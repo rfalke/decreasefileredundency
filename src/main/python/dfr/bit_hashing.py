@@ -3,9 +3,10 @@ import hashlib
 
 MAX_CHUNK_SIZE_FOR_HASHING = long(4*1024*1024)
 
+
 def get_sha1sums(fullpath, size, first_hash_size):
     assert size >= first_hash_size
-    file = open(fullpath,"r")
+    file = open(fullpath, "r")
     hashobj = hashlib.sha1()
     current_size = long(first_hash_size)
     bytes_read = 0L
@@ -28,6 +29,6 @@ def get_sha1sums(fullpath, size, first_hash_size):
     first = result[first_hash_size]
     full = result[size]
     del result[first_hash_size]
-    if size !=  first_hash_size:
+    if size != first_hash_size:
         del result[size]
     return first, full, result
