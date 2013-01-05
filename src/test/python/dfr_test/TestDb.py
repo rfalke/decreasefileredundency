@@ -33,7 +33,7 @@ class Test(TestCase):
         with TempDir() as tmpdir:
             db_name = os.path.join(tmpdir.name, "files.db")
             the_db = db.Database(db_name, verbose=0)
-            repo = db.Repo(the_db.conn, "dir", ["name"])
+            repo = db.Repo(the_db.conn, "dir", Dir, ["name"])
             repo.save(Dir("foo"))
             self.assertRaises(Exception, repo.load, 1)
 

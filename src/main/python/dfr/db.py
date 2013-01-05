@@ -23,10 +23,11 @@ def makedirs(dirname):
 
 
 class Repo:
-    def __init__(self, conn, table, attrs):
+    def __init__(self, conn, table, clazz, attrs):
         self.conn = conn
         self.table = table
         self.attrs = attrs
+        self.clazz = clazz
 
     def _execute(self, sql, parameter=None):
         if 0:
@@ -42,6 +43,7 @@ class Repo:
             raise
 
     def save(self, obj):
+        assert isinstance(obj, self.clazz)
         cols = ",".join(self.attrs)
         values = [getattr(obj, x) for x in self.attrs]
 
@@ -96,7 +98,11 @@ class Repo:
         cursor = self._execute_select(cols, query)
         res = cursor.fetchall()
         if res:
-            return [self.construct(x) for x in res]
+            objs = [self.construct(x) for x in res]
+            for obj in objs:
+                assert isinstance(obj, self.clazz)
+            return objs
+
         return []
 
     def load(self, id):
@@ -105,6 +111,7 @@ class Repo:
         return objs[0]
 
     def delete(self, obj):
+        assert isinstance(obj, self.clazz)
         assert obj.id
         cursor = self._execute("DELETE FROM %s WHERE id = ?" %
                                self.table, [obj.id])
@@ -118,7 +125,7 @@ class Repo:
 
 class DirRepo(Repo):
     def __init__(self, conn):
-        Repo.__init__(self, conn, "dir", ["name"])
+        Repo.__init__(self, conn, "dir", Dir, ["name"])
 
     def build_where(self, query):
         where, args = Repo.build_where(self, query)
@@ -132,7 +139,7 @@ class DirRepo(Repo):
 
 class FileRepo(Repo):
     def __init__(self, conn):
-        Repo.__init__(self, conn, "file",
+        Repo.__init__(self, conn, "file", File,
                       ["dirid", "name", "mtime", "contentid"])
 
     def build_where(self, query):
@@ -147,7 +154,7 @@ class FileRepo(Repo):
 
 class ContentRepo(Repo):
     def __init__(self, conn):
-        Repo.__init__(self, conn, "content",
+        Repo.__init__(self, conn, "content", Content,
                       ["size", "fullsha1", "first1ksha1", "partsha1s"])
 
     def build_where(self, query):
