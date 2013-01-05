@@ -19,11 +19,13 @@ def should_index_file(size):
 
 
 class BitIndexer:
-    def __init__(self, db, verbose_progress=1):
+    def __init__(self, db, verbose_progress=2):
         self.db = db
         self.verbose_progress = verbose_progress
 
     def run(self, roots):
+        self.progress("Legend: .=new, m=modified, d=deleted, " +
+                      "P=permission problem, E=some unknown error\n", 2)
         for root in roots:
             for dirpath, dirnames, filenames in os.walk(unicode(root)):
                 self.index_one_directory(dirpath, dirnames, filenames)
@@ -90,7 +92,7 @@ class BitIndexer:
         self.db.commit()
         self.progress("]")
 
-    def progress(self, msg):
-        if self.verbose_progress:
+    def progress(self, msg, level=1):
+        if level <= self.verbose_progress:
             sys.stderr.write(msg)
             sys.stderr.flush()
