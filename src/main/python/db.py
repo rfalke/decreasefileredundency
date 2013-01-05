@@ -1,5 +1,6 @@
 
 import os,sqlite3,errno
+from model import *
 
 def get_default_db_file():
     home=os.path.expanduser("~")
@@ -12,14 +13,141 @@ def makedirs(dirname):
         if exception.errno != errno.EEXIST:
             raise
         
-class File:
-    pass
+class Repo:
+    def __init__(self,conn,table,attrs):
+        self.conn=conn
+        self.table=table
+        self.attrs=attrs
+
+    def _execute(self, sql, parameter=None):
+        if 0: print "Execute %r with parameter=%r"%(sql, parameter)
+        try:
+            if parameter==None:
+                return self.conn.execute(sql)
+            else:
+                return self.conn.execute(sql, parameter)
+        except:
+            print "Error: sql=%r with parameter=%r"%(sql, parameter)
+            raise
+        
+    def save(self,obj):
+        cols=",".join(self.attrs)
+        values=[getattr(obj,x) for x in self.attrs]
+        
+        if obj.id==None:
+            qmarks=",".join(["?" for x in self.attrs])
+            c=self._execute('INSERT INTO %s (id,%s) VALUES (NULL, %s)'%(self.table,cols,qmarks), values)
+            id=c.lastrowid
+            assert id
+            obj.id=id
+        else:
+            assigns=["%s=?"%x for x in self.attrs]
+            c=self._execute('UPDATE %s SET %s WHERE id=?'%(self.table, ",".join(assigns)), values+[obj.id])
+            assert c.rowcount==1
+
+    def build_where(self,query):
+        where=[]
+        args=[]
+        if "id" in query:
+            where.append("id=?")
+            args.append(query["id"])
+            del query["id"]
+        for attr in self.attrs:
+            if attr in query:
+                where.append(attr+"=?")
+                args.append(query[attr])
+                del query[attr]
+        return where,args
+
+    def _execute_select(self, columns,query):
+        where,args=self.build_where(query)
+        if where:
+            cond=" AND ".join(where)
+            sql='SELECT %s FROM %s WHERE %s'%(columns,self.table,cond)
+            return self._execute(sql, args)
+        else:
+            return self._execute('SELECT %s FROM %s'%(columns,self.table))
+        
+    def find_ids(self,**query):
+        c=self._execute_select("id", query)
+        res=c.fetchall()
+        if res:
+            return [x[0] for x in res]
+        return []
+
+    def find(self,**query):
+        cols=",".join(["id"]+self.attrs)
+        c=self._execute_select(cols, query)
+        res=c.fetchall()
+        if res:
+            return [self.construct(x) for x in res]
+        return []
+
+    def load(self, id):
+        objs=self.find(id=id)
+        assert len(objs)==1
+        return objs[0]
+
+    def delete(self, obj):
+        assert obj.id
+        c=self._execute("DELETE FROM %s WHERE id = ?"%self.table, [obj.id])
+        assert c.rowcount==1
+        obj.id="object deleted in database"
+
+class DirRepo(Repo):
+    def __init__(self,conn):
+        Repo.__init__(self,conn,"dir",["name"])
+
+    def build_where(self,query):
+        where,args=Repo.build_where(self,query)
+        assert len(query)==0
+        return where,args
+
+    def construct(self,x):
+        id,name=x
+        obj=Dir(name)
+        obj.id=id
+        return obj
+
+class FileRepo(Repo):
+    def __init__(self,conn):
+        Repo.__init__(self,conn,"file",["dirid","name","mtime","contentid"])
+
+    def build_where(self,query):
+        where,args=Repo.build_where(self,query)
+        assert len(query)==0
+        return where,args
+
+    def construct(self,x):
+        id,dirid,name,mtime,contentid=x
+        obj=File(dirid,name,mtime,contentid)
+        obj.id=id
+        return obj
+
+class ContentRepo(Repo):
+    def __init__(self,conn):
+        Repo.__init__(self,conn,"content",["size","fullsha1", "first1ksha1", "partsha1s"])
+
+    def build_where(self,query):
+        where,args=Repo.build_where(self,query)
+        assert len(query)==0
+        return where,args
+
+    def construct(self,x):
+        id,size,fullsha1, first1ksha1, partsha1s=x
+        obj=Content(size,fullsha1, first1ksha1, partsha1s)
+        obj.id=id
+        return obj
 
 class Database:
     def __init__(self, db_file="files.db",verbose=1):
         do_init=not os.path.exists(db_file)
         makedirs(os.path.dirname(db_file))
         self.conn = sqlite3.connect(db_file)
+        self.dir=DirRepo(self.conn)
+        self.file=FileRepo(self.conn)
+        self.content=ContentRepo(self.conn)
+
         if do_init:
             if verbose:
                 print "Creating new database '%s'"%db_file
@@ -52,49 +180,30 @@ CREATE TABLE content (
         pass
 
     def commit(self):
-        self.conn.commit()        
-
+        self.conn.commit()
 
     def get_or_insert_dir(self, dirname):
-        res=self.conn.execute('SELECT id FROM dir WHERE name=?', [dirname]).fetchone()
-        if res:
-            return res[0]
+        ids=self.dir.find_ids(name=dirname)
+        if ids:
+            return ids[0]
         else:
-            c=self.conn.execute('INSERT INTO dir VALUES (NULL, ?)', [dirname])
-            id=c.lastrowid
-            assert id
-            return id
-        
-    def get_or_insert_content(self, first_1k_sha1, full_sha1, size, other_sha1s):
-        res=self.conn.execute('SELECT id FROM content WHERE fullsha1=?', [full_sha1]).fetchone()
-        if res:
-            return res[0]
-        else:
-            c=self.conn.execute('INSERT INTO content VALUES (NULL, ?,?,?,?)', [first_1k_sha1, full_sha1, size, other_sha1s])
-            id=c.lastrowid
-            assert id
-            return id
-        
-    def insert_or_update_file(self,dirid,filename,contentid,mtime):
-        c=self.conn.execute('INSERT OR REPLACE INTO file VALUES (NULL, ?,?,?,?)', [dirid,filename,contentid,mtime])
+            obj=Dir(dirname)
+            self.dir.save(obj)
+            return obj.id
 
-        id=c.lastrowid
-        assert id
-        return id
+    def get_or_insert_content(self, obj):
+        ids=self.content.find_ids(fullsha1=obj.fullsha1)
+        if ids:
+            assert len(ids)==1
+            return ids[0]
+        else:
+            self.content.save(obj)
+            return obj.id
 
     def get_file(self, dirid, filename):
-        rs=self.conn.execute('SELECT file.id,content.size,file.mtime FROM file,content WHERE dirid=? and name=? and file.contentid=content.id',
-                             [dirid, filename]).fetchone()
-        if rs:
-            result=File()
-            result.id=rs[0]
-            result.size=rs[1]
-            result.mtime=rs[2]
-            return result
-        return None
-
-    def get_file_names_of_dir(self,dirid):
-        return [x[0] for x in self.conn.execute('SELECT name FROM file WHERE dirid=?', [dirid]).fetchall()]
-
-    def remove_file(self,dirid,filename):
-        self.conn.execute('DELETE FROM file WHERE dirid=? AND name=?', [dirid,filename])
+        objs=self.file.find(dirid=dirid, name=filename)
+        if objs:
+            assert len(objs)==1
+            return objs[0]
+        else:
+            return None

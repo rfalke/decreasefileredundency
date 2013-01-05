@@ -1,6 +1,7 @@
 
 import os,sys,hashlib
 import bit_hashing
+from model import *
 
 MIN_LENGTH=1024
 
@@ -25,8 +26,15 @@ class BitIndexer:
     def get_or_insert_content(self, fullpath, size):
         first,full,other=bit_hashing.get_sha1sums(fullpath,size,MIN_LENGTH)
         other_hashs=" ".join(["%d:%s"%x for x in other.items()])
-        return self.db.get_or_insert_content(first,full,size,other_hashs)
-    
+        obj=Content(size,full,first,other_hashs)        
+        return self.db.get_or_insert_content(obj)
+
+    def get_file_state(self,dirid,filename,mtime,size):
+        fileobj = self.db.get_file(dirid,filename)
+        if not fileobj: return "new",File(dirid,filename,mtime,None)
+        if fileobj.mtime!=mtime: return "changed",fileobj
+        return "unchanged",fileobj
+
     def index_one_directory(self,dirpath, dirnames, filenames):
         self.progress("[")
 
@@ -34,10 +42,10 @@ class BitIndexer:
 
         dirid = self.db.get_or_insert_dir(abspath(dirpath))
 
-        for filename in self.db.get_file_names_of_dir(dirid):
-            if filename not in filenames:
-                sys.stdout.write("d");sys.stdout.flush()
-                self.db.remove_file(dirid,filename)
+        for fileobj in self.db.file.find(dirid=dirid):
+            if fileobj.name not in filenames:
+                self.progres("d")
+                self.db.file.delete(fileobj)
 
         for filename in filenames:
             fullpath=os.path.join(dirpath,filename)
@@ -47,17 +55,18 @@ class BitIndexer:
 
             if not self.should_index_file(dirpath, filename, size):
                 continue
-            dbfile = self.db.get_file(dirid,filename)
-            if dbfile:
-                if dbfile.mtime==mtime and dbfile.size==size:
-                    continue
-                else:
-                    self.progress("m")
-            else:
+            state,fileobj=self.get_file_state(dirid,filename,mtime,size)
+            if state=="unchanged":
+                continue
+            elif state=="new":
                 self.progress(".")
+            else:
+                self.progress("m")
                 
             contentid = self.get_or_insert_content(fullpath, size)
-            self.db.insert_or_update_file(dirid,filename,contentid,mtime)
+            fileobj.contentid=contentid
+            fileobj.mtime=mtime
+            self.db.file.save(fileobj)
 
         self.db.commit()
         self.progress("]")
