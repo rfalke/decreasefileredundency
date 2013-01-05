@@ -182,7 +182,7 @@ class Database:
             self.conn.execute('''
 CREATE TABLE dir (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name text NOT NULL,
+  name TEXT NOT NULL,
   UNIQUE (name)
 )''')
             self.conn.execute('''

@@ -157,5 +157,32 @@ class Test(TestCase):
                 indexer.run([datadir])
                 self.assertEqual(devnull.written(), "[E]\n")
 
+    def test_file_names(self):
+        with TempDir() as tmpdir:
+            datadir = join(tmpdir.name, 'data')
+            names = []
+            names.append("all_chars_part1_%s" % ("".join([unichr(x) for x in range(1, 80)])))
+            names.append("all_chars_part2_%s" % ("".join([unichr(x) for x in range(80, 160)])))
+            names.append("all_chars_part3_%s" % ("".join([unichr(x) for x in range(160, 240)])))
+            names.append("all_chars_part4_%s" % ("".join([unichr(x) for x in range(240, 256)])))
+
+            for name in names:
+                name = name.replace("/", "")
+                subdir = join(datadir, name)
+                os.makedirs(subdir)
+                write_binary(1024, join(subdir, name))
+
+            db_fn = join(tmpdir.name, 'files.db')
+            the_db = db.Database(db_fn, verbose=0)
+            indexer = BitIndexer(the_db, verbose_progress=1)
+            with NoStderr() as devnull:
+                indexer.run([datadir])
+            self.assertTrue(len(the_db.file.find_ids()), len(names))
+
+            with NoStderr() as devnull:
+                indexer.run([datadir])
+                self.assertEqual(devnull.written(), "[]"*(1+len(names))+"\n")
+            self.assertTrue(len(the_db.file.find_ids()), len(names))
+
 if __name__ == '__main__':
     unittest.main()

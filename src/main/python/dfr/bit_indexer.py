@@ -25,7 +25,7 @@ class BitIndexer:
 
     def run(self, roots):
         for root in roots:
-            for dirpath, dirnames, filenames in os.walk(root):
+            for dirpath, dirnames, filenames in os.walk(unicode(root)):
                 self.index_one_directory(dirpath, dirnames, filenames)
         self.progress("\n")
 
