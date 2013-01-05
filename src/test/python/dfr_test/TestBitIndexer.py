@@ -1,25 +1,27 @@
 
-from bit_indexer import BitIndexer
 from tempdir import TempDir
-import db
-import random
-import os,unittest,sqlite3,time
+import os, unittest, sqlite3, time
+
+from dfr.bit_indexer import BitIndexer
+from dfr import db
+
+from dfr_test.utils import write_binary
 
 class Test(unittest.TestCase):
 
     def test_simple(self):
-        with TempDir() as d:
-            datadir=os.path.join(d.name, 'data')
-            subdir1=os.path.join(datadir, 'sub1')
-            subdir2=os.path.join(datadir, 'sub2')
+        with TempDir() as tmpdir:
+            datadir = os.path.join(tmpdir.name, 'data')
+            subdir1 = os.path.join(datadir, 'sub1')
+            subdir2 = os.path.join(datadir, 'sub2')
             os.makedirs(subdir1)
             os.makedirs(subdir2)
-            self.write_binary(1024, os.path.join(subdir1, 'input1'))
-            self.write_binary(1025, os.path.join(subdir1, 'input2'))
-            self.write_binary(1026, os.path.join(subdir2, 'input3'))
+            write_binary(1024, os.path.join(subdir1, 'input1'))
+            write_binary(1025, os.path.join(subdir1, 'input2'))
+            write_binary(1026, os.path.join(subdir2, 'input3'))
 
-            db_fn=os.path.join(d.name, 'files.db')
-            indexer=BitIndexer(db.Database(db_fn,verbose=0),verbose_progress=0)
+            db_fn = os.path.join(tmpdir.name, 'files.db')
+            indexer = BitIndexer(db.Database(db_fn, verbose = 0), verbose_progress = 0)
             indexer.run([datadir])
 
             conn = sqlite3.connect(db_fn)
@@ -44,13 +46,13 @@ class Test(unittest.TestCase):
                                (3, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'76f936767b092576521501bdb344aa7a632b88b8', 1026, u'')] )
 
     def test_content_changes(self):
-        with TempDir() as d:
-            datadir=os.path.join(d.name, 'data')
+        with TempDir() as tmpdir:
+            datadir = os.path.join(tmpdir.name, 'data')
             os.makedirs(datadir)
-            self.write_binary(1024, os.path.join(datadir, 'input'))
+            write_binary(1024, os.path.join(datadir, 'input'))
 
-            db_fn=os.path.join(d.name, 'files.db')
-            indexer=BitIndexer(db.Database(db_fn,verbose=0),verbose_progress=0)
+            db_fn = os.path.join(tmpdir.name, 'files.db')
+            indexer = BitIndexer(db.Database(db_fn, verbose = 0), verbose_progress = 0)
             indexer.run([datadir])
 
             conn = sqlite3.connect(db_fn)
@@ -58,18 +60,11 @@ class Test(unittest.TestCase):
                              [(1, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77')])
 
             time.sleep(2)
-            self.write_binary(1024, os.path.join(datadir, 'input'), offset=1)
+            write_binary(1024, os.path.join(datadir, 'input'), offset = 1)
             indexer.run([datadir])
 
             self.assertEqual(conn.execute("select contentid,fullsha1 from file,content where file.contentid=content.id").fetchall(),
                              [(2, u'b0f14f1c1d87185bcc46363860b84609d5a2169e')])
-
-    def write_binary(self,size,filename, offset=0):
-        f=open(filename,"wb")
-        for i in range(size):
-            f.write(chr((i+offset) % 256))
-        f.close()
-        assert os.path.getsize(filename)==size
 
 
 if __name__ == '__main__':
