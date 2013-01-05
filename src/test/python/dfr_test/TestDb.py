@@ -2,19 +2,57 @@
 from tempdir import TempDir
 import os
 import unittest
+from sqlite3 import IntegrityError
 
 from dfr import db
 from dfr.model import Dir, File, Content
+from dfr_test.utils import make_unwriteable, TestCase, nostderr
 
 
-class Test(unittest.TestCase):
+class Test(TestCase):
 
-    def assert_lists_have_same_items(self, actual_list, expected_list):
-        self.assertEqual(len(actual_list), len(expected_list))
-        for i in actual_list:
-            self.assertTrue(i in expected_list)
-        for i in expected_list:
-            self.assertTrue(i in actual_list)
+    def test_get_default_db_file(self):
+        self.assertTrue(db.get_default_db_file().startswith(os.path.expanduser("~")))
+        self.assertTrue(db.get_default_db_file().startswith("/home/"))
+
+    def test_missing_db_dir(self):
+        with TempDir() as tmpdir:
+            make_unwriteable(tmpdir.name)
+            db_name = os.path.join(tmpdir.name, "subdir", "files.db")
+            self.assertRaises(OSError, db.Database, db_name)
+
+    def test_sql_error(self):
+        with TempDir() as tmpdir:
+            db_name = os.path.join(tmpdir.name, "files.db")
+            repo = db.Database(db_name, verbose=0).dir
+            repo.save(Dir("foo"))
+            with nostderr():
+                self.assertRaises(IntegrityError, repo.save, Dir("foo"))
+
+    def test_abstract_construct_method(self):
+        with TempDir() as tmpdir:
+            db_name = os.path.join(tmpdir.name, "files.db")
+            the_db = db.Database(db_name, verbose=0)
+            repo = db.Repo(the_db.conn, "dir", ["name"])
+            repo.save(Dir("foo"))
+            self.assertRaises(Exception, repo.load, 1)
+
+    def test_get_or_insert_content(self):
+        with TempDir() as tmpdir:
+            db_name = os.path.join(tmpdir.name, "files.db")
+            the_db = db.Database(db_name, verbose=0)
+            content = Content(1024, "hash1", "hash2", "hash3")
+            self.assertEqual(the_db.get_or_insert_content(content), 1)
+
+            content = Content(1024, "hash1", "hash2", "hash3")
+            self.assertEqual(the_db.get_or_insert_content(content), 1)
+
+    def test_verbose_for_coverage(self):
+        with TempDir() as tmpdir:
+            db_name = os.path.join(tmpdir.name, "files.db")
+            with nostderr():
+                db.Database(db_name, verbose=1)
+            self.assertTrue(True)
 
     def test_dir_repo(self):
         with TempDir() as tmpdir:

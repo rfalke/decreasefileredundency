@@ -2,6 +2,7 @@
 import os
 import sqlite3
 import errno
+import sys
 
 
 from dfr.model import Dir, File, Content
@@ -18,6 +19,7 @@ def makedirs(dirname):
     except OSError as exception:
         if exception.errno != errno.EEXIST:
             raise
+    assert os.path.isdir(dirname)
 
 
 class Repo:
@@ -35,7 +37,8 @@ class Repo:
             else:
                 return self.conn.execute(sql, parameter)
         except:
-            print "Error: sql=%r with parameter=%r" % (sql, parameter)
+            sys.stderr.write("Error: sql=%r with parameter=%r\n" %
+                             (sql, parameter))
             raise
 
     def save(self, obj):
@@ -168,7 +171,7 @@ class Database:
 
         if do_init:
             if verbose:
-                print "Creating new database '%s'" % db_file
+                sys.stderr.write("Creating new database '%s'\n" % db_file)
             self.conn.execute('''
 CREATE TABLE dir (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -79,5 +79,5 @@ class BitIndexer:
 
     def progress(self, msg):
         if self.verbose_progress:
-            sys.stdout.write(msg)
-            sys.stdout.flush()
+            sys.stderr.write(msg)
+            sys.stderr.flush()
