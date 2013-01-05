@@ -6,7 +6,7 @@ from sqlite3 import IntegrityError
 
 from dfr import db
 from dfr.model import Dir, File, Content
-from dfr_test.utils import make_unwriteable, TestCase, nostderr
+from dfr_test.utils import make_unwriteable, TestCase, NoStderr
 
 
 class Test(TestCase):
@@ -26,7 +26,7 @@ class Test(TestCase):
             db_name = os.path.join(tmpdir.name, "files.db")
             repo = db.Database(db_name, verbose=0).dir
             repo.save(Dir("foo"))
-            with nostderr():
+            with NoStderr():
                 self.assertRaises(IntegrityError, repo.save, Dir("foo"))
 
     def test_abstract_construct_method(self):
@@ -50,7 +50,7 @@ class Test(TestCase):
     def test_verbose_for_coverage(self):
         with TempDir() as tmpdir:
             db_name = os.path.join(tmpdir.name, "files.db")
-            with nostderr():
+            with NoStderr():
                 db.Database(db_name, verbose=1)
             self.assertTrue(True)
 

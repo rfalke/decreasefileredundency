@@ -1,6 +1,9 @@
 
 import os
 import sys
+import errno
+import stat
+
 from dfr.bit_hashing import get_sha1sums
 from dfr.model import File, Content
 
@@ -55,24 +58,34 @@ class BitIndexer:
 
         for filename in filenames:
             fullpath = os.path.join(dirpath, filename)
-            stats = os.stat(fullpath)
+            stats = os.lstat(fullpath)
             size = long(stats.st_size)
             mtime = int(stats.st_mtime)
+
+            if not stat.S_ISREG(stats.st_mode):
+                continue
 
             if not should_index_file(size):
                 continue
             state, fileobj = self.get_file_state(dirid, filename, mtime)
             if state == "unchanged":
                 continue
-            elif state == "new":
-                self.progress(".")
-            else:
-                self.progress("m")
 
-            contentid = self.get_or_insert_content(fullpath, size)
-            fileobj.contentid = contentid
-            fileobj.mtime = mtime
-            self.db.file.save(fileobj)
+            try:
+                contentid = self.get_or_insert_content(fullpath, size)
+                fileobj.contentid = contentid
+                fileobj.mtime = mtime
+                self.db.file.save(fileobj)
+
+                if state == "new":
+                    self.progress(".")
+                else:
+                    self.progress("m")
+            except IOError as exception:
+                if exception.errno == errno.EACCES:
+                    self.progress("P")
+                else:
+                    self.progress("E")
 
         self.db.commit()
         self.progress("]")

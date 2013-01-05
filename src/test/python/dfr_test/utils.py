@@ -2,7 +2,6 @@
 import os
 import stat
 import unittest
-import contextlib
 import sys
 
 
@@ -34,6 +33,13 @@ def make_unwriteable(path):
     os.chmod(path, new_mode)
 
 
+def make_unreadable(path):
+    mode = os.stat(path).st_mode
+    assert (mode & stat.S_IRUSR) == stat.S_IRUSR
+    new_mode = mode - stat.S_IRUSR
+    os.chmod(path, new_mode)
+
+
 class TestCase(unittest.TestCase):
 
     def assert_lists_have_same_items(self, actual_list, expected_list):
@@ -44,16 +50,30 @@ class TestCase(unittest.TestCase):
             self.assertTrue(i in actual_list)
 
 
-@contextlib.contextmanager
-def nostderr():
-    class Devnull(object):
-        def write(self, _):
-            pass
+class Devnull(object):
+    def __init__(self, written):
+        self.written = written
 
-        def flush(self):
-            pass
+    def write(self, msg):
+        self.written[0] += msg
 
-    savestderr = sys.stderr
-    sys.stderr = Devnull()
-    yield
-    sys.stderr = savestderr
+    def flush(self):
+        pass
+
+
+class NoStderr:
+    def __init__(self):
+        self._written = None
+        self.savestderr = None
+
+    def __enter__(self):
+        self.savestderr = sys.stderr
+        self._written = [""]
+        sys.stderr = Devnull(self._written)
+        return self
+
+    def __exit__(self, type, value, traceback):
+        sys.stderr = self.savestderr
+
+    def written(self):
+        return self._written[0]

@@ -4,27 +4,32 @@ import os
 import unittest
 import sqlite3
 import time
+import errno
+from os.path import join
 
 from dfr.bit_indexer import BitIndexer
 from dfr import db
-from dfr_test.utils import write_binary, TestCase, nostderr
+from dfr_test.utils import write_binary, TestCase, NoStderr, make_unreadable
 
 
 class Test(TestCase):
 
     def test_simple(self):
         with TempDir() as tmpdir:
-            datadir = os.path.join(tmpdir.name, 'data')
-            subdir1 = os.path.join(datadir, 'sub1')
-            subdir2 = os.path.join(datadir, 'sub2')
+            datadir = join(tmpdir.name, 'data')
+            subdir1 = join(datadir, 'sub1')
+            subdir2 = join(datadir, 'sub2')
             os.makedirs(subdir1)
             os.makedirs(subdir2)
-            write_binary(100, os.path.join(subdir1, 'small_file'))
-            write_binary(1024, os.path.join(subdir1, 'input1'))
-            write_binary(1025, os.path.join(subdir1, 'input2'))
-            write_binary(1026, os.path.join(subdir2, 'input3'))
+            write_binary(100, join(subdir1, 'small_file'))
+            write_binary(1024, join(subdir1, 'input1'))
+            write_binary(1025, join(subdir1, 'input2'))
+            write_binary(1026, join(subdir2, 'input3'))
 
-            db_fn = os.path.join(tmpdir.name, 'files.db')
+            os.symlink("input1", join(subdir1, 'symlink'))
+            os.mkfifo(join(subdir1, 'fifo'))
+
+            db_fn = join(tmpdir.name, 'files.db')
             indexer = BitIndexer(db.Database(db_fn, verbose=0), verbose_progress=0)
             indexer.run([datadir])
 
@@ -51,16 +56,16 @@ class Test(TestCase):
 
     def test_removed_file(self):
         with TempDir() as tmpdir:
-            datadir = os.path.join(tmpdir.name, 'data')
-            subdir1 = os.path.join(datadir, 'sub1')
-            subdir2 = os.path.join(datadir, 'sub2')
+            datadir = join(tmpdir.name, 'data')
+            subdir1 = join(datadir, 'sub1')
+            subdir2 = join(datadir, 'sub2')
             os.makedirs(subdir1)
             os.makedirs(subdir2)
-            write_binary(1024, os.path.join(subdir1, 'input1'))
-            write_binary(1025, os.path.join(subdir1, 'input2'))
-            write_binary(1026, os.path.join(subdir2, 'input3'))
+            write_binary(1024, join(subdir1, 'input1'))
+            write_binary(1025, join(subdir1, 'input2'))
+            write_binary(1026, join(subdir2, 'input3'))
 
-            db_fn = os.path.join(tmpdir.name, 'files.db')
+            db_fn = join(tmpdir.name, 'files.db')
             the_db = db.Database(db_fn, verbose=0)
             indexer = BitIndexer(the_db, verbose_progress=0)
             indexer.run([datadir])
@@ -75,7 +80,7 @@ class Test(TestCase):
                               (2, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'409c9978384c2832af4a98bafe453dfdaa8e8054', 1025, u''),
                               (3, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'76f936767b092576521501bdb344aa7a632b88b8', 1026, u'')])
 
-            os.remove(os.path.join(subdir1, 'input1'))
+            os.remove(join(subdir1, 'input1'))
             indexer.run([datadir])
 
             self.assertEqual(conn.execute("select * from dir").fetchall(),
@@ -89,11 +94,11 @@ class Test(TestCase):
 
     def test_content_changes(self):
         with TempDir() as tmpdir:
-            datadir = os.path.join(tmpdir.name, 'data')
+            datadir = join(tmpdir.name, 'data')
             os.makedirs(datadir)
-            write_binary(1024, os.path.join(datadir, 'input'))
+            write_binary(1024, join(datadir, 'input'))
 
-            db_fn = os.path.join(tmpdir.name, 'files.db')
+            db_fn = join(tmpdir.name, 'files.db')
             indexer = BitIndexer(db.Database(db_fn, verbose=0), verbose_progress=0)
             indexer.run([datadir])
 
@@ -101,8 +106,8 @@ class Test(TestCase):
             self.assertEqual(conn.execute("select contentid,fullsha1 from file,content where file.contentid=content.id").fetchall(),
                              [(1, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77')])
             new_mtime = time.time() + 2
-            write_binary(1024, os.path.join(datadir, 'input'), offset=1)
-            os.utime(os.path.join(datadir, 'input'), (new_mtime, new_mtime))
+            write_binary(1024, join(datadir, 'input'), offset=1)
+            os.utime(join(datadir, 'input'), (new_mtime, new_mtime))
             indexer.run([datadir])
 
             self.assertEqual(conn.execute("select contentid,fullsha1 from file,content where file.contentid=content.id").fetchall(),
@@ -110,16 +115,47 @@ class Test(TestCase):
 
     def test_progress_for_coverage(self):
         with TempDir() as tmpdir:
-            datadir = os.path.join(tmpdir.name, 'data')
+            datadir = join(tmpdir.name, 'data')
             os.makedirs(datadir)
-            write_binary(1024, os.path.join(datadir, 'input'))
+            write_binary(1024, join(datadir, 'input'))
 
-            db_fn = os.path.join(tmpdir.name, 'files.db')
-            with nostderr():
+            db_fn = join(tmpdir.name, 'files.db')
+            with NoStderr():
                 indexer = BitIndexer(db.Database(db_fn, verbose=0), verbose_progress=1)
                 indexer.run([datadir])
             self.assertTrue(True)
 
+    def test_unreadable_file(self):
+        with TempDir() as tmpdir:
+            datadir = join(tmpdir.name, 'data')
+            os.makedirs(datadir)
+            write_binary(1024, join(datadir, 'input'))
+            make_unreadable(join(datadir, 'input'))
+
+            db_fn = join(tmpdir.name, 'files.db')
+            indexer = BitIndexer(db.Database(db_fn, verbose=0), verbose_progress=1)
+            with NoStderr() as devnull:
+                indexer.run([datadir])
+                self.assertEqual(devnull.written(), "[P]\n")
+
+    def test_other_io_error(self):
+        with TempDir() as tmpdir:
+            datadir = join(tmpdir.name, 'data')
+            os.makedirs(datadir)
+            write_binary(1024, join(datadir, 'input'))
+
+            db_fn = join(tmpdir.name, 'files.db')
+            indexer = BitIndexer(db.Database(db_fn, verbose=0), verbose_progress=1)
+
+            def mock(*_):
+                error = IOError("dummy io error")
+                error.errno = errno.EBADFD
+                raise error
+
+            indexer.get_or_insert_content = mock
+            with NoStderr() as devnull:
+                indexer.run([datadir])
+                self.assertEqual(devnull.written(), "[E]\n")
 
 if __name__ == '__main__':
     unittest.main()
