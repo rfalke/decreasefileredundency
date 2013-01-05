@@ -10,7 +10,7 @@ from dfr.model import Dir, File, Content
 
 def get_default_db_file():
     home = os.path.expanduser("~")
-    return os.path.join(home, ".dfr", "files.db")
+    return os.path.join(home, ".dfr", "files.sdb")
 
 
 def makedirs(dirname):

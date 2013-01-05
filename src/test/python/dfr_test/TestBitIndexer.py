@@ -29,7 +29,7 @@ class Test(TestCase):
             os.symlink("input1", join(subdir1, 'symlink'))
             os.mkfifo(join(subdir1, 'fifo'))
 
-            db_fn = join(tmpdir.name, 'files.db')
+            db_fn = join(tmpdir.name, 'files.sdb')
             indexer = BitIndexer(db.Database(db_fn, verbose=0), verbose_progress=0)
             indexer.run([datadir])
 
@@ -65,7 +65,7 @@ class Test(TestCase):
             write_binary(1025, join(subdir1, 'input2'))
             write_binary(1026, join(subdir2, 'input3'))
 
-            db_fn = join(tmpdir.name, 'files.db')
+            db_fn = join(tmpdir.name, 'files.sdb')
             the_db = db.Database(db_fn, verbose=0)
             indexer = BitIndexer(the_db, verbose_progress=0)
             indexer.run([datadir])
@@ -98,7 +98,7 @@ class Test(TestCase):
             os.makedirs(datadir)
             write_binary(1024, join(datadir, 'input'))
 
-            db_fn = join(tmpdir.name, 'files.db')
+            db_fn = join(tmpdir.name, 'files.sdb')
             indexer = BitIndexer(db.Database(db_fn, verbose=0), verbose_progress=0)
             indexer.run([datadir])
 
@@ -119,7 +119,7 @@ class Test(TestCase):
             os.makedirs(datadir)
             write_binary(1024, join(datadir, 'input'))
 
-            db_fn = join(tmpdir.name, 'files.db')
+            db_fn = join(tmpdir.name, 'files.sdb')
             with NoStderr():
                 indexer = BitIndexer(db.Database(db_fn, verbose=0), verbose_progress=1)
                 indexer.run([datadir])
@@ -132,7 +132,7 @@ class Test(TestCase):
             write_binary(1024, join(datadir, 'input'))
             make_unreadable(join(datadir, 'input'))
 
-            db_fn = join(tmpdir.name, 'files.db')
+            db_fn = join(tmpdir.name, 'files.sdb')
             indexer = BitIndexer(db.Database(db_fn, verbose=0), verbose_progress=1)
             with NoStderr() as devnull:
                 indexer.run([datadir])
@@ -144,7 +144,7 @@ class Test(TestCase):
             os.makedirs(datadir)
             write_binary(1024, join(datadir, 'input'))
 
-            db_fn = join(tmpdir.name, 'files.db')
+            db_fn = join(tmpdir.name, 'files.sdb')
             indexer = BitIndexer(db.Database(db_fn, verbose=0), verbose_progress=1)
 
             def mock(*_):
@@ -172,7 +172,7 @@ class Test(TestCase):
                 os.makedirs(subdir)
                 write_binary(1024, join(subdir, name))
 
-            db_fn = join(tmpdir.name, 'files.db')
+            db_fn = join(tmpdir.name, 'files.sdb')
             the_db = db.Database(db_fn, verbose=0)
             indexer = BitIndexer(the_db, verbose_progress=1)
             with NoStderr() as devnull:

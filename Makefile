@@ -18,5 +18,5 @@ pep8:
 	pep8 --max-line-length=200 src/test/python/dfr_test/*.py
 
 profile:
-	rm -rf /tmp/files_profile.db
-	time python -m cProfile src/main/python/dfr/f_index.py  --db-file /tmp/files_profile.db /etc
+	rm -rf /tmp/files_profile.sdb
+	time python -m cProfile src/main/python/dfr/f_index.py  --db-file /tmp/files_profile.sdb /etc

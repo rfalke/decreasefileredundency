@@ -18,12 +18,12 @@ class Test(TestCase):
     def test_missing_db_dir(self):
         with TempDir() as tmpdir:
             make_unwriteable(tmpdir.name)
-            db_name = os.path.join(tmpdir.name, "subdir", "files.db")
+            db_name = os.path.join(tmpdir.name, "subdir", "files.sdb")
             self.assertRaises(OSError, db.Database, db_name)
 
     def test_sql_error(self):
         with TempDir() as tmpdir:
-            db_name = os.path.join(tmpdir.name, "files.db")
+            db_name = os.path.join(tmpdir.name, "files.sdb")
             repo = db.Database(db_name, verbose=0).dir
             repo.save(Dir("foo"))
             with NoStderr():
@@ -31,7 +31,7 @@ class Test(TestCase):
 
     def test_abstract_construct_method(self):
         with TempDir() as tmpdir:
-            db_name = os.path.join(tmpdir.name, "files.db")
+            db_name = os.path.join(tmpdir.name, "files.sdb")
             the_db = db.Database(db_name, verbose=0)
             repo = db.Repo(the_db.conn, "dir", Dir, ["name"])
             repo.save(Dir("foo"))
@@ -39,7 +39,7 @@ class Test(TestCase):
 
     def test_get_or_insert_content(self):
         with TempDir() as tmpdir:
-            db_name = os.path.join(tmpdir.name, "files.db")
+            db_name = os.path.join(tmpdir.name, "files.sdb")
             the_db = db.Database(db_name, verbose=0)
             content = Content(1024, "hash1", "hash2", "hash3")
             self.assertEqual(the_db.get_or_insert_content(content), 1)
@@ -49,14 +49,14 @@ class Test(TestCase):
 
     def test_verbose_for_coverage(self):
         with TempDir() as tmpdir:
-            db_name = os.path.join(tmpdir.name, "files.db")
+            db_name = os.path.join(tmpdir.name, "files.sdb")
             with NoStderr():
                 db.Database(db_name, verbose=1)
             self.assertTrue(True)
 
     def test_dir_repo(self):
         with TempDir() as tmpdir:
-            db_fn = os.path.join(tmpdir.name, 'files.db')
+            db_fn = os.path.join(tmpdir.name, 'files.sdb')
             repo = db.Database(db_fn, verbose=0).dir
 
             obj1 = Dir("foo")
@@ -89,7 +89,7 @@ class Test(TestCase):
 
     def test_file_repo(self):
         with TempDir() as tmpdir:
-            db_fn = os.path.join(tmpdir.name, 'files.db')
+            db_fn = os.path.join(tmpdir.name, 'files.sdb')
             repo = db.Database(db_fn, verbose=0).file
 
             obj1 = File(1, "foo", 2, 3)
@@ -133,7 +133,7 @@ class Test(TestCase):
 
     def test_content_repo(self):
         with TempDir() as tmpdir:
-            db_fn = os.path.join(tmpdir.name, 'files.db')
+            db_fn = os.path.join(tmpdir.name, 'files.sdb')
             repo = db.Database(db_fn, verbose=0).content
 
             obj1 = Content(1, "a", "b", "c")
