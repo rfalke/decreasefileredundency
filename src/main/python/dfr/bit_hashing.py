@@ -54,3 +54,25 @@ def get_sha1sums(fullpath, file_size, first_hash_size,
     if file_size != first_hash_size:
         del result[file_size]
     return first, full, result
+
+
+def get_partial_sha1(fullpath, start_offset, bytes_to_hash, buffer_size=long(4*1024*1024)):
+    assert start_offset >= 0
+    assert bytes_to_hash > 0
+
+    file = open(fullpath, "r")
+    file.seek(start_offset)
+    hashobj = hashlib.sha1()
+    bytes_left = bytes_to_hash
+    while True:
+        if bytes_left == 0:
+            break
+        length = buffer_size
+        if length > bytes_left:
+            length = bytes_left
+        buffer = file.read(length)
+        assert len(buffer) == length, [len(buffer), length]
+        bytes_left -= length
+        hashobj.update(buffer)
+    file.close()
+    return hashobj.hexdigest()
