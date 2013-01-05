@@ -1,9 +1,13 @@
+COVERAGE=coverage-2.6
+
 tests: pep8 pylint python_tests 
 
 python_tests:
+	$(COVERAGE) erase
 	for i in src/test/python/dfr_test/Test*.py; do echo "=== Running $$i"; \
 	PYTHONPATH=src/main/python:src/test/python:deps/python \
-	python "$$i"; done
+	$(COVERAGE) run -a "$$i"; done
+	$(COVERAGE) report -m
 
 pylint:
 	PYTHONPATH=src/main/python pylint --rcfile=src/test/resources/pylint.rc -r n dfr
