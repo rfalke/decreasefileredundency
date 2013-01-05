@@ -94,6 +94,9 @@ class Repo:
         assert c.rowcount==1
         obj.id="object deleted in database"
 
+    def construct(self,parameter):
+        raise Exception("Overwrite me")
+
 class DirRepo(Repo):
     def __init__(self,conn):
         Repo.__init__(self,conn,"dir",["name"])

@@ -44,7 +44,7 @@ class BitIndexer:
 
         for fileobj in self.db.file.find(dirid=dirid):
             if fileobj.name not in filenames:
-                self.progres("d")
+                self.progress("d")
                 self.db.file.delete(fileobj)
 
         for filename in filenames:
