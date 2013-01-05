@@ -100,8 +100,8 @@ class Test(TestCase):
             conn = sqlite3.connect(db_fn)
             self.assertEqual(conn.execute("select contentid,fullsha1 from file,content where file.contentid=content.id").fetchall(),
                              [(1, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77')])
-
-            time.sleep(2)
+            new_mtime = time.time() + 2
+            os.utime(os.path.join(datadir, 'input'), (new_mtime, new_mtime))
             write_binary(1024, os.path.join(datadir, 'input'), offset=1)
             indexer.run([datadir])
 
