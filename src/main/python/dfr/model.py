@@ -36,6 +36,13 @@ class Content:
         self.first1ksha1 = first1ksha1
         self.partsha1s = partsha1s
 
+    def get_part_hashs(self):
+        res = {}
+        for i in [x for x in self.partsha1s.split(" ") if x]:
+            size, hash = i.split(":")
+            res[long(size)] = hash
+        return res
+
     def __eq__(self, other):
         return (self.id == other.id
                 and self.fullsha1 == other.fullsha1

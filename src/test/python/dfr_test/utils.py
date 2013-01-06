@@ -5,12 +5,16 @@ import unittest
 import sys
 
 
-def write_binary(size, filename, offset=0):
+def write_binary(size, filename, offset=0, add=None):
     out = open(filename, "wb")
     for i in range(size):
         out.write(chr((i+offset) % 256))
+    if add is None:
+        add = []
+    for i in add:
+        out.write(chr(i % 256))
     out.close()
-    assert os.path.getsize(filename) == size
+    assert os.path.getsize(filename) == size+len(add)
 
 
 def write_big_binary(megabytes, filename, offset=0):

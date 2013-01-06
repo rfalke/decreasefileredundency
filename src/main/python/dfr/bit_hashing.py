@@ -56,7 +56,8 @@ def get_sha1sums(fullpath, file_size, first_hash_size,
     return first, full, result
 
 
-def get_partial_sha1(fullpath, start_offset, bytes_to_hash, buffer_size=long(4*1024*1024)):
+def get_partial_sha1(fullpath, start_offset, bytes_to_hash,
+                     buffer_size=long(4*1024*1024)):
     assert start_offset >= 0
     assert bytes_to_hash > 0
 

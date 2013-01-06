@@ -42,9 +42,9 @@ class Test(unittest.TestCase):
             hashs = get_sha1sums(tmpfn, os.path.getsize(tmpfn), 1024)
             self.assertEqual(hashs, ('5b00669c480d5cffbdfa8bdba99561160f2d1b77', '170751534f1a95fd80a7a25787ecad2b60368e0a',
                                      {2048L: 'f10ccfde60c17db26e7d85d35665c7661dbbeb2c'}))
-            self.assertEqual(get_partial_sha1(tmpfn, 0, 1024) , '5b00669c480d5cffbdfa8bdba99561160f2d1b77')
-            self.assertEqual(get_partial_sha1(tmpfn, 0, 2048) , 'f10ccfde60c17db26e7d85d35665c7661dbbeb2c')
-            self.assertEqual(get_partial_sha1(tmpfn, 0, 2049) , '170751534f1a95fd80a7a25787ecad2b60368e0a')
+            self.assertEqual(get_partial_sha1(tmpfn, 0, 1024), '5b00669c480d5cffbdfa8bdba99561160f2d1b77')
+            self.assertEqual(get_partial_sha1(tmpfn, 0, 2048), 'f10ccfde60c17db26e7d85d35665c7661dbbeb2c')
+            self.assertEqual(get_partial_sha1(tmpfn, 0, 2049), '170751534f1a95fd80a7a25787ecad2b60368e0a')
 
     def test_larger_file(self):
         with TempDir() as tmpdir:

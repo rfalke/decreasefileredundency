@@ -190,8 +190,17 @@ class ContentRepo(Repo):
                             "GROUP BY contentid " +
                             "HAVING COUNT(id) >= %d" % at_least)
             del query["at_least_referenced"]
+        elif "at_least_referenced_first1k" in query:
+            assert builder.columns == "id"
+            at_least = int(query["at_least_referenced_first1k"])
+            builder.set_sql("SELECT first1ksha1 " +
+                            "FROM content " +
+                            "GROUP BY first1ksha1 " +
+                            "HAVING COUNT(first1ksha1) >= %d" % at_least)
+            del query["at_least_referenced_first1k"]
         else:
             Repo.build_where(self, query, builder)
+
         assert len(query) == 0
 
     def construct(self, values):
