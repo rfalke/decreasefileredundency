@@ -14,12 +14,13 @@ def get_default_db_file():
 
 
 def makedirs(dirname):
-    try:
-        os.makedirs(dirname)
-    except OSError as exception:
-        if exception.errno != errno.EEXIST:
-            raise
-    assert os.path.isdir(dirname)
+    if dirname:
+        try:
+            os.makedirs(dirname)
+        except OSError as exception:
+            if exception.errno != errno.EEXIST:
+                raise
+        assert os.path.isdir(dirname)
 
 
 def is_list_or_tuple(arg):
