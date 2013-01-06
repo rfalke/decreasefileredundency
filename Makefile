@@ -23,3 +23,4 @@ profile:
 
 shell_tests:
 	./src/test/shell/run.sh
+	./src/test/shell/verify_sig2.sh
