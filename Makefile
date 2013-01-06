@@ -1,6 +1,6 @@
 COVERAGE=coverage-2.6
 
-tests: pep8 pylint python_tests 
+tests: pep8 pylint python_tests shell_tests
 
 python_tests:
 	$(COVERAGE) erase
@@ -20,3 +20,6 @@ pep8:
 profile:
 	rm -rf /tmp/files_profile.sdb
 	time python -m cProfile src/main/python/dfr/f_index.py  --db-file /tmp/files_profile.sdb /etc
+
+shell_tests:
+	./src/test/shell/run.sh

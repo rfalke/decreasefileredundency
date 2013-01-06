@@ -32,7 +32,7 @@ class InteractiveBitEqualResolver(InteractiveResolver):
 
     def _evaluate_input(self, input, pair):
         if input == "a":
-            if hardlinked:
+            if pair.hardlinked:
                 print "Error: Will not remove both hardlinked files."
                 return None
             else:
@@ -164,7 +164,8 @@ def main():
         finder = BitEqualFinder(repo, args.roots)
         for pair in finder.find():
             if args.csv:
-                print "%d;%s;%s;%s" % (pair.size, pair.hardlinked, pair.path1, pairpath2)
+                print "%d;%s;%s;%s" % (
+                    pair.size, pair.hardlinked, pair.path1, pair.path2)
             else:
                 resolver.resolve(pair)
 
