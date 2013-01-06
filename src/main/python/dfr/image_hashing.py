@@ -1,5 +1,11 @@
 
 import Image
+import tempfile
+import os
+
+
+def shell_quote(str):
+    return "'%s'" % str.replace("'", "'\\''")
 
 
 def get_image_signature1(filename):
@@ -38,3 +44,28 @@ def get_image_signature1(filename):
 
     assert -1 not in value
     return value
+
+
+def get_image_signatures2(filenames):
+    infile = tempfile.mkstemp()[1]
+    out = open(infile, "w")
+    for i in range(len(filenames)):
+        out.write("%d %s\n" % (i, filenames[i]))
+    out.close()
+
+    outfile = tempfile.mkstemp()[1]
+    os.system('src/main/perl/get_sig2.pl <%s >%s 2>/dev/null' % (
+        shell_quote(infile), shell_quote(outfile)))
+
+    hashs = []
+    for line in open(outfile).readlines():
+        id, hash = line.strip().split(" ", 1)
+        id = int(id)
+        assert len(hashs) == id
+        if hash == "FAILED":
+            hashs.append(None)
+        else:
+            assert len(hash) == 64
+            hashs.append(hash)
+    assert len(hashs) == len(filenames)
+    return hashs

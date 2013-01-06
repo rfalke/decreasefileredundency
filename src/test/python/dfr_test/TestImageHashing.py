@@ -1,7 +1,7 @@
 
 import unittest
 
-from dfr.image_hashing import get_image_signature1
+from dfr.image_hashing import get_image_signature1, get_image_signatures2
 
 
 class Test(unittest.TestCase):
@@ -46,6 +46,19 @@ class Test(unittest.TestCase):
             0, 0, 0, 3, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 89,
             0, 0, 0, 0, 0, 0, 6, 2, 0, 0, 0, 0, 0, 2, 0, 86,
             0, 0, 0, 0, 1, 0, 5, 0, 0, 0, 1, 0, 0, 0, 0, 86])
+
+    def test_signature2(self):
+        self.assertEqual(get_image_signatures2(
+            ["src/test/images/all_black_rgb.png",
+             "does not exists",
+             "Makefile",
+             "src/test/images/all_white_rgb.png",
+             "src/test/images/pattern1.png"]),
+            ['ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+             None,
+             None,
+             '0000000000000000000000000000000000000000000000000000000000000000',
+             'ff80ff80ff80ff80ff80ff80ff80ffffffff01ff01ff01ff01ff01ff01ff01ff'])
 
 if __name__ == '__main__':
     unittest.main()

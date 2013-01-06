@@ -22,9 +22,8 @@ while(<>)
 {
     chomp;
     /^([^ ]+) (.*)$/;
-    $hash=$1;
-    $filename=$2;
-    -e $filename or die "Can't find file '$filename'";
+    $hash = $1;
+    $filename = $2;
 
     $img = &getfingerprint($image, $filename);
 
@@ -36,7 +35,9 @@ while(<>)
 	    print sprintf("%02x", ord(substr($img,$i,1)));
 	}
 	print "\n";
-    }			
+    } else {
+	print "$hash FAILED\n";
+    }
 }
 
 undef $image;
@@ -72,29 +73,31 @@ sub getfingerprint {
     my $image = shift;
     my $file = shift;
     my (@blobs, $img);
+
+    -e $file or return "";
 	
     $x = $image->Read($file);
-    die "ERROR: $x" if "$x"; 
+    return "" if "$x";
     $#$image = 0;
     $x = $image->Sample("160x160!");
-    die "ERROR: $x" if "$x"; 
+    return "" if "$x"; 
     $x = $image->Modulate(saturation=>-100);
-    die "ERROR: $x" if "$x"; 
+    return "" if "$x"; 
     #$x = $image->Blur(factor=>99);
     $x = $image->Blur(radius=>15, sigma=>19);
-    die "ERROR: $x" if "$x"; 
+    return "" if "$x"; 
     $x = $image->Normalize();
-    die "ERROR: $x" if "$x"; 
+    return "" if "$x"; 
     $x = $image->Equalize();
-    die "ERROR: $x" if "$x"; 
+    return "" if "$x"; 
     $x = $image->Sample("16x16");
-    die "ERROR: $x" if "$x"; 
+    return "" if "$x"; 
     $x = $image->Threshold();
-    die "ERROR: $x" if "$x"; 
+    return "" if "$x"; 
     $x = $image->Set(magick=>'pbm');
-    die "ERROR: $x" if "$x"; 
+    return "" if "$x"; 
     @blobs = $image->ImageToBlob();
-    die "ERROR: $x" if "$x"; 
+    return "" if "$x"; 
     $img = substr($blobs[0],-32,32);
 
     # free image but don't delete object.
