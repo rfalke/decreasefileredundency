@@ -5,7 +5,7 @@ import errno
 import sys
 
 
-from dfr.model import Dir, File, Content
+from dfr.model import Dir, File, Content, Image
 
 
 def get_default_db_file():
@@ -23,8 +23,16 @@ def makedirs(dirname):
         assert os.path.isdir(dirname)
 
 
-def is_list_or_tuple(arg):
-    return isinstance(arg, (list, tuple)) and not isinstance(arg, basestring)
+class Null:
+    def __init__(self):
+        pass
+
+
+class In:
+    def __init__(self, values):
+        assert (isinstance(values, (list, tuple)) and
+                not isinstance(values, basestring))
+        self.values = values
 
 
 class SelectBuilder:
@@ -101,9 +109,12 @@ class Repo:
         for attr in ["id"]+self.attrs:
             if attr in query:
                 value = query[attr]
-                if is_list_or_tuple(value):
-                    qmarks = ','.join('?'*len(value))
-                    builder.add_where(attr + " IN (%s)" % qmarks, *value)
+                if isinstance(value, Null) or value == Null:
+                    builder.add_where(attr + " IS NULL")
+                elif isinstance(value, In):
+                    values = value.values
+                    qmarks = ','.join('?'*len(values))
+                    builder.add_where(attr + " IN (%s)" % qmarks, *values)
                 else:
                     builder.add_where(attr + "=?", value)
                 del query[attr]
@@ -180,7 +191,8 @@ class FileRepo(Repo):
 class ContentRepo(Repo):
     def __init__(self, conn):
         Repo.__init__(self, conn, "content", Content,
-                      ["size", "fullsha1", "first1ksha1", "partsha1s"])
+                      ["size", "fullsha1", "first1ksha1",
+                       "partsha1s", "imageid"])
 
     def build_where(self, query, builder):
         if "at_least_referenced" in query:
@@ -205,8 +217,22 @@ class ContentRepo(Repo):
         assert len(query) == 0
 
     def construct(self, values):
-        id, size, fullsha1, first1ksha1, partsha1s = values
-        return Content(size, fullsha1, first1ksha1, partsha1s, id=id)
+        id, size, fullsha1, first1ksha1, partsha1s, imageid = values
+        return Content(size, fullsha1, first1ksha1, partsha1s, imageid, id=id)
+
+
+class ImageRepo(Repo):
+    def __init__(self, conn):
+        Repo.__init__(self, conn, "image", Image,
+                      ["sig1", "sig2"])
+
+    def build_where(self, query, builder):
+        Repo.build_where(self, query, builder)
+        assert len(query) == 0, query
+
+    def construct(self, values):
+        id, sig1, sig2 = values
+        return Image(sig1, sig2, id=id)
 
 
 class Database:
@@ -218,6 +244,7 @@ class Database:
         self.dir = DirRepo(self.conn)
         self.file = FileRepo(self.conn)
         self.content = ContentRepo(self.conn)
+        self.image = ImageRepo(self.conn)
 
         if do_init:
             if verbose:
@@ -244,7 +271,14 @@ CREATE TABLE content (
   fullsha1 TEXT NOT NULL,
   size INTEGER NOT NULL,
   partsha1s TEXT NOT NULL,
+  imageid INTEGER NULL,
   UNIQUE (fullsha1,size)
+)''')
+            self.conn.execute('''
+CREATE TABLE image (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  sig1 TEXT NOT NULL,
+  sig2 TEXT NOT NULL
 )''')
 
     def begin(self):

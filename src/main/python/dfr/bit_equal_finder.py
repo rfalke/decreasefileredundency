@@ -1,6 +1,8 @@
 
 import os
 
+from dfr.db import In
+
 
 def abspath(path):
     return os.path.realpath(os.path.abspath(path))
@@ -64,7 +66,7 @@ class BitEqualFinder(BaseFinder):
         ids = self.db.content.find_ids(at_least_referenced=2)
         contents = []
         for ids_part in chunker(ids, 100):
-            contents += self.db.content.find(id=ids_part)
+            contents += self.db.content.find(id=In(ids_part))
         contents.sort(lambda x, y: cmp(y.size, x.size))
         return contents
 

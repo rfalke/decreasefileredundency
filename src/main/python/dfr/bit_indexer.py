@@ -34,7 +34,7 @@ class BitIndexer:
     def get_or_insert_content(self, fullpath, size):
         first, full, other = get_sha1sums(fullpath, size, MIN_LENGTH)
         other_hashs = " ".join(["%d:%s" % x for x in other.items()])
-        obj = Content(size, full, first, other_hashs)
+        obj = Content(size, full, first, other_hashs, None)
         return self.db.get_or_insert_content(obj)
 
     def get_file_state(self, dirid, filename, mtime):

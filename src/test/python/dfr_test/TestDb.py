@@ -4,27 +4,27 @@ import os
 import unittest
 from sqlite3 import IntegrityError
 
-from dfr import db
-from dfr.model import Dir, File, Content
+from dfr.db import get_default_db_file, Database, Repo, Null, In
+from dfr.model import Dir, File, Content, Image
 from dfr_test.utils import make_unwriteable, TestCase, NoStderr
 
 
 class Test(TestCase):
 
     def test_get_default_db_file(self):
-        self.assertTrue(db.get_default_db_file().startswith(os.path.expanduser("~")))
-        self.assertTrue(db.get_default_db_file().startswith("/home/"))
+        self.assertTrue(get_default_db_file().startswith(os.path.expanduser("~")))
+        self.assertTrue(get_default_db_file().startswith("/home/"))
 
     def test_missing_db_dir(self):
         with TempDir() as tmpdir:
             make_unwriteable(tmpdir.name)
             db_name = os.path.join(tmpdir.name, "subdir", "files.sdb")
-            self.assertRaises(OSError, db.Database, db_name)
+            self.assertRaises(OSError, Database, db_name)
 
     def test_sql_error(self):
         with TempDir() as tmpdir:
             db_name = os.path.join(tmpdir.name, "files.sdb")
-            repo = db.Database(db_name, verbose=0).dir
+            repo = Database(db_name, verbose=0).dir
             repo.save(Dir("foo"))
             with NoStderr():
                 self.assertRaises(IntegrityError, repo.save, Dir("foo"))
@@ -32,32 +32,32 @@ class Test(TestCase):
     def test_abstract_construct_method(self):
         with TempDir() as tmpdir:
             db_name = os.path.join(tmpdir.name, "files.sdb")
-            the_db = db.Database(db_name, verbose=0)
-            repo = db.Repo(the_db.conn, "dir", Dir, ["name"])
+            the_db = Database(db_name, verbose=0)
+            repo = Repo(the_db.conn, "dir", Dir, ["name"])
             repo.save(Dir("foo"))
             self.assertRaises(Exception, repo.load, 1)
 
     def test_get_or_insert_content(self):
         with TempDir() as tmpdir:
             db_name = os.path.join(tmpdir.name, "files.sdb")
-            the_db = db.Database(db_name, verbose=0)
-            content = Content(1024, "hash1", "hash2", "hash3")
+            the_db = Database(db_name, verbose=0)
+            content = Content(1024, "hash1", "hash2", "hash3", 1)
             self.assertEqual(the_db.get_or_insert_content(content), 1)
 
-            content = Content(1024, "hash1", "hash2", "hash3")
+            content = Content(1024, "hash1", "hash2", "hash3", 1)
             self.assertEqual(the_db.get_or_insert_content(content), 1)
 
     def test_verbose_for_coverage(self):
         with TempDir() as tmpdir:
             db_name = os.path.join(tmpdir.name, "files.sdb")
             with NoStderr():
-                db.Database(db_name, verbose=1)
+                Database(db_name, verbose=1)
             self.assertTrue(True)
 
     def test_dir_repo(self):
         with TempDir() as tmpdir:
             db_fn = os.path.join(tmpdir.name, 'files.sdb')
-            repo = db.Database(db_fn, verbose=0).dir
+            repo = Database(db_fn, verbose=0).dir
 
             obj1 = Dir("foo")
             self.assertEqual(obj1, Dir("foo"))
@@ -78,7 +78,7 @@ class Test(TestCase):
             self.assert_lists_have_same_items(repo.find(), [obj1, obj2])
             self.assert_lists_have_same_items(repo.find(name="foo"), [obj1])
             self.assert_lists_have_same_items(repo.find(name="hello"), [])
-            self.assert_lists_have_same_items(repo.find(id=[1, 2]), [obj1, obj2])
+            self.assert_lists_have_same_items(repo.find(id=In([1, 2])), [obj1, obj2])
 
             obj1.name = "new"
             repo.save(obj1)
@@ -91,7 +91,7 @@ class Test(TestCase):
     def test_file_repo(self):
         with TempDir() as tmpdir:
             db_fn = os.path.join(tmpdir.name, 'files.sdb')
-            repo = db.Database(db_fn, verbose=0).file
+            repo = Database(db_fn, verbose=0).file
 
             obj1 = File(1, "foo", 2, 3)
             self.assertEqual(obj1, File(1, "foo", 2, 3))
@@ -118,7 +118,7 @@ class Test(TestCase):
             self.assert_lists_have_same_items(repo.find(), [obj1, obj2, obj3])
             self.assert_lists_have_same_items(repo.find(name="foo"), [obj1, obj3])
             self.assert_lists_have_same_items(repo.find(id=2), [obj2])
-            self.assert_lists_have_same_items(repo.find(id=[1, 2]), [obj1, obj2])
+            self.assert_lists_have_same_items(repo.find(id=In([1, 2])), [obj1, obj2])
             self.assert_lists_have_same_items(repo.find(dirid=1), [obj1, obj2])
             self.assert_lists_have_same_items(repo.find(contentid=5), [obj2, obj3])
             self.assert_lists_have_same_items(repo.find(name="hello"), [])
@@ -136,21 +136,21 @@ class Test(TestCase):
     def test_content_repo(self):
         with TempDir() as tmpdir:
             db_fn = os.path.join(tmpdir.name, 'files.sdb')
-            the_db = db.Database(db_fn, verbose=0)
+            the_db = Database(db_fn, verbose=0)
             repo = the_db.content
 
-            obj1 = Content(1, "a", "b", "c")
-            self.assertEqual(obj1, Content(1, "a", "b", "c"))
+            obj1 = Content(1, "a", "b", "c", 1)
+            self.assertEqual(obj1, Content(1, "a", "b", "c", 1))
             repo.save(obj1)
             self.assertEqual(obj1.id, 1)
-            self.assertEqual(obj1, Content(1, "a", "b", "c", id=1))
+            self.assertEqual(obj1, Content(1, "a", "b", "c", 1, id=1))
             self.assertEqual(repo.load(1), obj1)
 
-            obj2 = Content(2, "a", "d", "e")
+            obj2 = Content(2, "a", "d", "e", None)
             repo.save(obj2)
             self.assertEqual(obj2.id, 2)
 
-            obj3 = Content(1, "f", "g", "e")
+            obj3 = Content(1, "f", "g", "e", 2)
             repo.save(obj3)
             self.assertEqual(obj3.id, 3)
 
@@ -160,11 +160,13 @@ class Test(TestCase):
             self.assert_lists_have_same_items(repo.find_ids(fullsha1="a"), [1, 2])
             self.assert_lists_have_same_items(repo.find_ids(partsha1s="e"), [2, 3])
             self.assert_lists_have_same_items(repo.find_ids(size=99), [])
+            self.assert_lists_have_same_items(repo.find_ids(imageid=Null), [2])
+            self.assert_lists_have_same_items(repo.find_ids(imageid=Null()), [2])
 
             self.assert_lists_have_same_items(repo.find(), [obj1, obj2, obj3])
             self.assert_lists_have_same_items(repo.find(size=1), [obj1, obj3])
             self.assert_lists_have_same_items(repo.find(id=2), [obj2])
-            self.assert_lists_have_same_items(repo.find(id=[1, 2]), [obj1, obj2])
+            self.assert_lists_have_same_items(repo.find(id=In([1, 2])), [obj1, obj2])
             self.assert_lists_have_same_items(repo.find(fullsha1="a"), [obj1, obj2])
             self.assert_lists_have_same_items(repo.find(partsha1s="e"), [obj2, obj3])
             self.assert_lists_have_same_items(repo.find(size=99), [])
@@ -186,6 +188,40 @@ class Test(TestCase):
 
             self.assert_lists_have_same_items(repo.find_ids(at_least_referenced=1), [99, 100])
             self.assert_lists_have_same_items(repo.find_ids(at_least_referenced=2), [99])
+
+    def test_image_repo(self):
+        with TempDir() as tmpdir:
+            db_fn = os.path.join(tmpdir.name, 'files.sdb')
+            repo = Database(db_fn, verbose=0).image
+
+            obj1 = Image("sig1", "sig2")
+            self.assertEqual(obj1, Image("sig1", "sig2"))
+            repo.save(obj1)
+            self.assertEqual(obj1.id, 1)
+            self.assertEqual(obj1, Image("sig1", "sig2", id=1))
+            self.assertEqual(repo.load(1), obj1)
+
+            obj2 = Image("sig3", "sig4")
+            repo.save(obj2)
+            self.assertEqual(obj2.id, 2)
+
+            self.assert_lists_have_same_items(repo.find_ids(), [1, 2])
+            self.assert_lists_have_same_items(repo.find_ids(sig1="sig1"), [1])
+            self.assert_lists_have_same_items(repo.find_ids(id=2), [2])
+            self.assert_lists_have_same_items(repo.find_ids(sig1="hello"), [])
+
+            self.assert_lists_have_same_items(repo.find(), [obj1, obj2])
+            self.assert_lists_have_same_items(repo.find(sig1="sig1"), [obj1])
+            self.assert_lists_have_same_items(repo.find(sig1="hello"), [])
+            self.assert_lists_have_same_items(repo.find(id=In([1, 2])), [obj1, obj2])
+
+            obj1.sig1 = "new"
+            repo.save(obj1)
+
+            self.assertEqual(repo.load(1), obj1)
+
+            repo.delete(obj1)
+            self.assert_lists_have_same_items(repo.find_ids(), [2])
 
 
 if __name__ == '__main__':
