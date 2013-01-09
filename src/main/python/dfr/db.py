@@ -214,6 +214,7 @@ class Database:
         do_init = not os.path.exists(db_file)
         makedirs(os.path.dirname(db_file))
         self.conn = sqlite3.connect(db_file)
+        self.conn.text_factory = str
         self.dir = DirRepo(self.conn)
         self.file = FileRepo(self.conn)
         self.content = ContentRepo(self.conn)

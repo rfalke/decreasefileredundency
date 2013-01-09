@@ -27,7 +27,7 @@ class BitIndexer:
         self.progress("Legend: .=new, m=modified, d=deleted, " +
                       "P=permission problem, E=some unknown error\n", 2)
         for root in roots:
-            for dirpath, dirnames, filenames in os.walk(unicode(root)):
+            for dirpath, dirnames, filenames in os.walk(root):
                 self.index_one_directory(dirpath, dirnames, filenames)
         self.progress("\n")
 
