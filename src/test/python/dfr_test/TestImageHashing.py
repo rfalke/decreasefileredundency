@@ -1,7 +1,7 @@
 
 import unittest
 
-from dfr.image_hashing import get_image_signature1, get_image_signatures2
+from dfr.image_hashing import get_image_signature1, get_image_signatures2, CAUSE_UNEQUAL_LINES
 
 
 class Test(unittest.TestCase):
@@ -59,6 +59,15 @@ class Test(unittest.TestCase):
              None,
              '0000000000000000000000000000000000000000000000000000000000000000',
              'ff80ff80ff80ff80ff80ff80ff80ffffffff01ff01ff01ff01ff01ff01ff01ff'])
+
+    def test_signature2_for_coverage(self):
+        CAUSE_UNEQUAL_LINES.append(1)
+        try:
+            get_image_signatures2(["src/test/images/all_black_rgb.png"])
+            self.fail()
+        except KeyboardInterrupt:
+            pass
+
 
 if __name__ == '__main__':
     unittest.main()
