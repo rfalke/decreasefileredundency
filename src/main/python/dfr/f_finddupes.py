@@ -6,10 +6,7 @@ import locale
 import dfr.db
 from dfr.bit_equal_finder import BitEqualFinder
 from dfr.bit_truncated_finder import BitTruncatedFinder
-
-
-def format_bytes(bytes):
-    return locale.format('%d', bytes, 1)
+from dfr.support import format_bytes
 
 
 class InteractiveResolver:

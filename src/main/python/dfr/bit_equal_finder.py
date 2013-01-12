@@ -2,14 +2,7 @@
 import os
 
 from dfr.db import In
-
-
-def abspath(path):
-    return os.path.realpath(os.path.abspath(path))
-
-
-def chunker(seq, size):
-    return (seq[pos:pos + size] for pos in xrange(0, len(seq), size))
+from dfr.support import abspath, chunker
 
 
 def compare_files(file1, file2):

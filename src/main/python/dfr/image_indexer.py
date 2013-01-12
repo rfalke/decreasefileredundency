@@ -6,20 +6,7 @@ import time
 from dfr.image_hashing import get_image_signature1, get_image_signatures2
 from dfr.model import Image
 from dfr.db import Null
-
-
-def format_time_delta(sec):
-    sec = int(sec)
-    min = sec / 60
-    sec = sec % 60
-    hour = min / 60
-    min = min % 60
-    if hour:
-        return "%d:%02d:%02d" % (hour, min, sec)
-    elif min:
-        return "%d:%02d" % (min, sec)
-    else:
-        return "%ds" % (sec)
+from dfr.support import format_time_delta
 
 
 class ImageIndexer:

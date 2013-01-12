@@ -6,12 +6,9 @@ import stat
 
 from dfr.bit_hashing import get_sha1sums
 from dfr.model import File, Content
+from dfr.support import abspath
 
 MIN_LENGTH = 1024
-
-
-def abspath(path):
-    return os.path.realpath(os.path.abspath(path))
 
 
 def should_index_file(size):
