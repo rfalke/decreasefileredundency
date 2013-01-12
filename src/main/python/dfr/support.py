@@ -12,11 +12,11 @@ def chunker(seq, size):
     return (seq[pos:pos + size] for pos in xrange(0, len(seq), size))
 
 
-def format_bytes(num):
+def format_bytes_split(num):
     locale.setlocale(locale.LC_ALL, 'en_US')
     first = locale.format('%d', num, 1)
     if num < 1024:
-        return first
+        return (first, "")
 
     suffixes = ['KiB', 'MiB', 'GiB', 'TiB']
     suffix = len(suffixes)-1
@@ -25,7 +25,12 @@ def format_bytes(num):
         if num < 1024.0:
             suffix = i
             break
-    return "%s (%3.1f %s)" % (first, num, suffixes[suffix])
+    return (first, "(%3.1f %s)" % (num, suffixes[suffix]))
+
+
+def format_bytes(num):
+    str = " ".join(format_bytes_split(num))
+    return str.strip()
 
 
 def format_time_delta(sec):
