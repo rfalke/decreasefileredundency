@@ -58,6 +58,8 @@ class BitIndexer:
             self.next_commit = current_time + self.commit_every
             self.db.commit()
 
+        dirnames.sort()
+        filenames.sort()
         self.progress("[")
 
         self.db.begin()
