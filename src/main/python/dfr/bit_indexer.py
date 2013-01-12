@@ -3,6 +3,7 @@ import os
 import sys
 import errno
 import stat
+import time
 
 from dfr.bit_hashing import get_sha1sums
 from dfr.model import File, Content
@@ -16,16 +17,20 @@ def should_index_file(size):
 
 
 class BitIndexer:
-    def __init__(self, db, verbose_progress=2):
+    def __init__(self, db, verbose_progress=2, commit_every=12):
         self.db = db
+        self.commit_every = commit_every
         self.verbose_progress = verbose_progress
+        self.next_commit = None
 
     def run(self, roots):
+        self.next_commit = time.time() + self.commit_every
         self.progress("Legend: .=new, m=modified, d=deleted, " +
                       "P=permission problem, E=some unknown error\n", 2)
         for root in roots:
             for dirpath, dirnames, filenames in os.walk(root):
                 self.index_one_directory(dirpath, dirnames, filenames)
+        self.db.commit()
         self.progress("\n")
 
     def get_or_insert_content(self, fullpath, size):
@@ -48,6 +53,11 @@ class BitIndexer:
 
     # pylint: disable=W0613
     def index_one_directory(self, dirpath, dirnames, filenames):
+        current_time = time.time()
+        if current_time > self.next_commit:
+            self.next_commit = current_time + self.commit_every
+            self.db.commit()
+
         self.progress("[")
 
         self.db.begin()
@@ -89,8 +99,6 @@ class BitIndexer:
                     self.progress("P")
                 else:
                     self.progress("E")
-
-        self.db.commit()
         self.progress("]")
 
     def progress(self, msg, level=1):

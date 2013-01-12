@@ -192,5 +192,17 @@ class Test(TestCase):
             self.assertEqual(conn.execute("select * from content").fetchall(),
                              [(1, u'a128af6716f4a73cc0a490ee5ba2fd87a56823fe', u'04c942989681cbf2933bef10eb4afcc5312c9b3f', 1032, u'', None)])
 
+    def test_commit_every_mostly_for_coverage(self):
+        with TempDir() as tmpdir:
+            datadir = tmpdir.create_dir("data")
+
+            for i in range(1000):
+                write_binary(1024, join(datadir, 'input_%03d' % i))
+
+            db_fn = join(tmpdir.name, 'files.sdb')
+            indexer = BitIndexer(db.Database(db_fn, verbose=0), verbose_progress=0, commit_every=0.01)
+            indexer.run([datadir])
+            self.assertTrue(True)
+
 if __name__ == '__main__':
     unittest.main()

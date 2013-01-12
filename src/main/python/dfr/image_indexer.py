@@ -10,12 +10,14 @@ from dfr.support import format_time_delta
 
 
 class ImageIndexer:
-    def __init__(self, db, verbose_progress=2):
+    def __init__(self, db, verbose_progress=2, commit_every=12):
         self.db = db
         self.verbose_progress = verbose_progress
+        self.commit_every = commit_every
         self.todo = None
         self.done = None
         self.start = None
+        self.next_commit = None
 
     def progress(self, msg, level=1):
         if level <= self.verbose_progress:
@@ -38,15 +40,19 @@ class ImageIndexer:
         sys.stdout.flush()
 
     def run(self):
+        self.next_commit = time.time() + self.commit_every
         ids_to_index = self.db.content.find_ids(imageid=Null)
         self.start = time.time()
         self.todo = len(ids_to_index)
         self.done = 0
         for i in range(len(ids_to_index)):
+            current_time = time.time()
+            if current_time > self.next_commit:
+                self.next_commit = current_time + self.commit_every
+                self.db.commit()
+
             self.done = i
             self.print_progress()
-            if i % 10 == 0:
-                self.db.commit()
             contentid = ids_to_index[i]
             content = self.db.content.load(contentid)
             files = self.find_files_for_content(content)
