@@ -89,18 +89,18 @@ class Test(TestCase):
             db_fn = os.path.join(tmpdir.name, 'files.sdb')
             repo = Database(db_fn, verbose=0).file
 
-            obj1 = File(1, "foo", 2, 3)
-            self.assertEqual(obj1, File(1, "foo", 2, 3))
+            obj1 = File(1, "foo", 102, 3)
+            self.assertEqual(obj1, File(1, "foo", 102, 3))
             repo.save(obj1)
             self.assertEqual(obj1.id, 1)
-            self.assertEqual(obj1, File(1, "foo", 2, 3, id=1))
+            self.assertEqual(obj1, File(1, "foo", 102, 3, id=1))
             self.assertEqual(repo.load(1), obj1)
 
-            obj2 = File(1, "bar", 4, 5)
+            obj2 = File(1, "bar", 100, 5)
             repo.save(obj2)
             self.assertEqual(obj2.id, 2)
 
-            obj3 = File(6, "foo", 7, 5)
+            obj3 = File(6, "foo", 101, 5)
             repo.save(obj3)
             self.assertEqual(obj3.id, 3)
 
@@ -118,6 +118,11 @@ class Test(TestCase):
             self.assert_lists_have_same_items(repo.find(dirid=1), [obj1, obj2])
             self.assert_lists_have_same_items(repo.find(contentid=5), [obj2, obj3])
             self.assert_lists_have_same_items(repo.find(name="hello"), [])
+
+            self.assert_lists_have_same_items(repo.find_ids(sort="id asc"), [1, 2, 3])
+            self.assert_lists_have_same_items(repo.find_ids(sort="id desc"), [3, 2, 1])
+            self.assert_lists_have_same_items(repo.find(sort="mtime asc"), [obj2, obj3, obj1])
+            self.assert_lists_have_same_items(repo.find(sort="mtime desc"), [obj1, obj3, obj2])
 
             obj1.name = "new"
             obj1.dirid = 20

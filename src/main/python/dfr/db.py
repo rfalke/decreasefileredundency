@@ -36,6 +36,7 @@ class SelectBuilder:
         self.columns = columns
         self.where_pairs = []
         self.sql = None
+        self.order = None
 
     def add_where(self, cond, *values):
         self.where_pairs.append((cond, values))
@@ -52,7 +53,12 @@ class SelectBuilder:
             where = " WHERE "+" AND ".join(conds)
         else:
             where = ""
-        sql = 'SELECT %s FROM %s %s' % (self.columns, self.table, where)
+        if self.order:
+            order = "ORDER BY "+self.order
+        else:
+            order = ""
+        sql = 'SELECT %s FROM %s %s %s' % (
+            self.columns, self.table, where, order)
         return sql
 
     def get_args(self):
@@ -101,6 +107,11 @@ class Repo:
             assert cursor.rowcount == 1
 
     def build_where(self, query, builder):
+        if "sort" in query:
+            value = query["sort"]
+            builder.order = value
+            del query["sort"]
+
         for attr in ["id"]+self.attrs:
             if attr in query:
                 value = query[attr]
