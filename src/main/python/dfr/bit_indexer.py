@@ -29,9 +29,13 @@ class BitIndexer:
         self.progress("\n")
 
     def get_or_insert_content(self, fullpath, size):
-        first, full, other = get_sha1sums(fullpath, size, MIN_LENGTH)
+        first, full, other, is_image = get_sha1sums(fullpath, size, MIN_LENGTH)
         other_hashs = " ".join(["%d:%s" % x for x in other.items()])
-        obj = Content(size, full, first, other_hashs, None)
+        if is_image:
+            imageid = None
+        else:
+            imageid = -1
+        obj = Content(size, full, first, other_hashs, imageid)
         return self.db.get_or_insert_content(obj)
 
     def get_file_state(self, dirid, filename, mtime):

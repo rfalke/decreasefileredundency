@@ -1,5 +1,6 @@
 
 import hashlib
+import imghdr
 
 
 def get_sha1sums(fullpath, file_size, first_hash_size,
@@ -14,6 +15,7 @@ def get_sha1sums(fullpath, file_size, first_hash_size,
     hashobj = hashlib.sha1()
     buffer = file.read(buffer_size)
     assert len(buffer) in [file_size, buffer_size]
+    is_image = imghdr.what(None, buffer) is not None
 
     current_size = first_hash_size
     offset = 0
@@ -53,7 +55,7 @@ def get_sha1sums(fullpath, file_size, first_hash_size,
     del result[first_hash_size]
     if file_size != first_hash_size:
         del result[file_size]
-    return first, full, result
+    return first, full, result, is_image
 
 
 def get_partial_sha1(fullpath, start_offset, bytes_to_hash,

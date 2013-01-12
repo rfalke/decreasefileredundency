@@ -26,14 +26,14 @@ class Test(unittest.TestCase):
             tmpfn = os.path.join(tmpdir.name, 'input')
             write_binary(1024, tmpfn)
             hashs = get_sha1sums(tmpfn, os.path.getsize(tmpfn), 1024)
-            self.assertEqual(hashs, ('5b00669c480d5cffbdfa8bdba99561160f2d1b77', '5b00669c480d5cffbdfa8bdba99561160f2d1b77', {}))
+            self.assertEqual(hashs, ('5b00669c480d5cffbdfa8bdba99561160f2d1b77', '5b00669c480d5cffbdfa8bdba99561160f2d1b77', {}, False))
 
     def test_1025_bytes_file(self):
         with TempDir() as tmpdir:
             tmpfn = os.path.join(tmpdir.name, 'input')
             write_binary(1025, tmpfn)
             hashs = get_sha1sums(tmpfn, os.path.getsize(tmpfn), 1024)
-            self.assertEqual(hashs, ('5b00669c480d5cffbdfa8bdba99561160f2d1b77', '409c9978384c2832af4a98bafe453dfdaa8e8054', {}))
+            self.assertEqual(hashs, ('5b00669c480d5cffbdfa8bdba99561160f2d1b77', '409c9978384c2832af4a98bafe453dfdaa8e8054', {}, False))
 
     def test_2049_bytes_file(self):
         with TempDir() as tmpdir:
@@ -41,7 +41,7 @@ class Test(unittest.TestCase):
             write_binary(2049, tmpfn)
             hashs = get_sha1sums(tmpfn, os.path.getsize(tmpfn), 1024)
             self.assertEqual(hashs, ('5b00669c480d5cffbdfa8bdba99561160f2d1b77', '170751534f1a95fd80a7a25787ecad2b60368e0a',
-                                     {2048L: 'f10ccfde60c17db26e7d85d35665c7661dbbeb2c'}))
+                                     {2048L: 'f10ccfde60c17db26e7d85d35665c7661dbbeb2c'}, False))
             self.assertEqual(get_partial_sha1(tmpfn, 0, 1024), '5b00669c480d5cffbdfa8bdba99561160f2d1b77')
             self.assertEqual(get_partial_sha1(tmpfn, 0, 2048), 'f10ccfde60c17db26e7d85d35665c7661dbbeb2c')
             self.assertEqual(get_partial_sha1(tmpfn, 0, 2049), '170751534f1a95fd80a7a25787ecad2b60368e0a')
@@ -64,7 +64,7 @@ class Test(unittest.TestCase):
                                       1048576L: 'ecfc8e86fdd83811f9cc9bf500993b63069923be',
                                       2097152L: '3394ba403303c0784f836bdb1ee13a4bfd14e6de',
                                       4194304L: 'd697024ed93ff625330d050391ade99cd5cbddad'
-                                      }))
+                                      }, False))
 
     def test_file_of_buffer_size(self):
         with TempDir() as tmpdir:
@@ -83,7 +83,16 @@ class Test(unittest.TestCase):
                                       524288L: '6c10df9ee9fa4b1c8495b19becb7f8ae8a07ad96',
                                       1048576L: 'ecfc8e86fdd83811f9cc9bf500993b63069923be',
                                       2097152L: '3394ba403303c0784f836bdb1ee13a4bfd14e6de'
-                                      }))
+                                      }, False))
+
+    def test_image_detection(self):
+        with TempDir() as tmpdir:
+            tmpfn = os.path.join(tmpdir.name, 'input')
+            out = open(tmpfn, "w")
+            out.write("\x89PNG\r\n\x1a\n" + (" " * 1024))
+            out.close()
+            is_image = get_sha1sums(tmpfn, os.path.getsize(tmpfn), 1024)[3]
+            self.assertTrue(is_image)
 
 if __name__ == '__main__':
     unittest.main()
