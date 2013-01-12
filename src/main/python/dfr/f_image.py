@@ -2,17 +2,13 @@
 import argparse
 import dfr.db
 from dfr.image_indexer import ImageIndexer
+from dfr.support import add_common_command_line_arguments
 
 
 def main():
-    default_db_file = dfr.db.get_default_db_file()
-
     parser = argparse.ArgumentParser(
         description='Generate image signatures for files in database.')
-    parser.add_argument('--db-file', metavar="FILE", dest='db', nargs=1,
-
-                        default=[default_db_file],
-                        help='the db file (default: '+default_db_file+')')
+    add_common_command_line_arguments(parser)
 
     args = parser.parse_args()
     repo = dfr.db.Database(args.db[0])

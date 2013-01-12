@@ -6,7 +6,7 @@ import locale
 import dfr.db
 from dfr.bit_equal_finder import BitEqualFinder
 from dfr.bit_truncated_finder import BitTruncatedFinder
-from dfr.support import format_bytes
+from dfr.support import format_bytes, add_common_command_line_arguments
 
 
 class InteractiveResolver:
@@ -118,16 +118,13 @@ class InteractiveBitTruncatedResolver(InteractiveResolver):
 
 def main():
     locale.setlocale(locale.LC_ALL, 'en_US')
-    default_db_file = dfr.db.get_default_db_file()
 
     parser = argparse.ArgumentParser(
         description='Find files with equal or similar content.')
     parser.add_argument('roots', metavar='DIR', nargs='*', default=["."],
                         help="a directory to scan for duplicate files " +
                         "(if not given '.' will be used)")
-    parser.add_argument('--db-file', metavar="FILE", dest='db', nargs=1,
-                        default=[default_db_file],
-                        help='the db file (default: '+default_db_file+')')
+    add_common_command_line_arguments(parser)
     parser.add_argument('-c', '--csv', action="store_true",
                         help='print all findings as a CSV using instead ' +
                         'of resolve interactive')

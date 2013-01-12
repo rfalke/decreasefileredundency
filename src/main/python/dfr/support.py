@@ -43,3 +43,14 @@ def format_time_delta(sec):
         return "%dm %ds" % (min, sec)
     else:
         return "%ds" % (sec)
+
+
+def add_common_command_line_arguments(parser):
+    def get_default_db_file():
+        home = os.path.expanduser("~")
+        return os.path.join(home, ".dfr", "files.sdb")
+
+    default_db_file = get_default_db_file()
+    parser.add_argument('--db-file', metavar="FILE", dest='db', nargs=1,
+                        default=[default_db_file],
+                        help='the db file (default: '+default_db_file+')')

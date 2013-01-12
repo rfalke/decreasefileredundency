@@ -1,7 +1,8 @@
 
 import unittest
+import argparse
 
-from dfr.support import abspath, chunker, format_bytes, format_time_delta
+from dfr.support import abspath, chunker, format_bytes, format_time_delta, add_common_command_line_arguments
 from dfr_test.utils import TestCase
 
 
@@ -38,6 +39,16 @@ class Test(TestCase):
         self.assertEqual(format_time_delta(71), "1m 11s")
         self.assertEqual(format_time_delta(3600), "1h 0m")
         self.assertEqual(format_time_delta(24*3600), "1d 0h")
+
+    def test_add_common_command_line_arguments(self):
+        parser = argparse.ArgumentParser()
+        add_common_command_line_arguments(parser)
+
+        default_db = parser.parse_args([]).db[0]
+        self.assertTrue(default_db.startswith("/"))
+        self.assertTrue(default_db.endswith("files.sdb"))
+        self.assertEqual(parser.parse_args(["--db-file", "foo"]).db[0], "foo")
+        self.assertEqual(parser.parse_args(["--db-file=foo"]).db[0], "foo")
 
 if __name__ == '__main__':
     unittest.main()

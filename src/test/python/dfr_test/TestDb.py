@@ -4,16 +4,12 @@ import os
 import unittest
 from sqlite3 import IntegrityError
 
-from dfr.db import get_default_db_file, Database, Repo, Null, In
+from dfr.db import Database, Repo, Null, In
 from dfr.model import Dir, File, Content, Image
 from dfr_test.utils import make_unwriteable, TestCase, NoStderr
 
 
 class Test(TestCase):
-
-    def test_get_default_db_file(self):
-        self.assertTrue(get_default_db_file().startswith(os.path.expanduser("~")))
-        self.assertTrue(get_default_db_file().startswith("/home/"))
 
     def test_missing_db_dir(self):
         with TempDir() as tmpdir:
