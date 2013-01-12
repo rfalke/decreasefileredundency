@@ -280,6 +280,10 @@ CREATE TABLE image (
   sig1 TEXT NOT NULL,
   sig2 TEXT NOT NULL
 )''')
+            self.conn.execute('''
+CREATE INDEX file_contentid ON FILE (
+  contentid
+)''')
 
     def begin(self):
         pass
