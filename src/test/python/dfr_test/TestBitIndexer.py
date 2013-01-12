@@ -9,7 +9,7 @@ from os.path import join
 
 from dfr.bit_indexer import BitIndexer
 from dfr import db
-from dfr_test.utils import write_binary, TestCase, NoStderr, make_unreadable
+from dfr_test.utils import write_binary, TestCase, NoStderr, make_unreadable, DO_NOT_MATCH_RE
 
 
 class Test(TestCase):
@@ -29,7 +29,7 @@ class Test(TestCase):
             os.mkfifo(join(subdir1, 'fifo'))
 
             db_fn = join(tmpdir.name, 'files.sdb')
-            indexer = BitIndexer(db.Database(db_fn, verbose=0), verbose_progress=0)
+            indexer = BitIndexer(db.Database(db_fn, verbose=0), DO_NOT_MATCH_RE, DO_NOT_MATCH_RE, verbose_progress=0)
             indexer.run([datadir])
 
             conn = sqlite3.connect(db_fn)
@@ -65,7 +65,7 @@ class Test(TestCase):
 
             db_fn = join(tmpdir.name, 'files.sdb')
             the_db = db.Database(db_fn, verbose=0)
-            indexer = BitIndexer(the_db, verbose_progress=0)
+            indexer = BitIndexer(the_db, DO_NOT_MATCH_RE, DO_NOT_MATCH_RE, verbose_progress=0)
             indexer.run([datadir])
 
             conn = sqlite3.connect(db_fn)
@@ -96,7 +96,7 @@ class Test(TestCase):
             write_binary(1024, join(datadir, 'input'))
 
             db_fn = join(tmpdir.name, 'files.sdb')
-            indexer = BitIndexer(db.Database(db_fn, verbose=0), verbose_progress=0)
+            indexer = BitIndexer(db.Database(db_fn, verbose=0), DO_NOT_MATCH_RE, DO_NOT_MATCH_RE, verbose_progress=0)
             indexer.run([datadir])
 
             conn = sqlite3.connect(db_fn)
@@ -117,7 +117,7 @@ class Test(TestCase):
 
             db_fn = join(tmpdir.name, 'files.sdb')
             with NoStderr():
-                indexer = BitIndexer(db.Database(db_fn, verbose=0), verbose_progress=1)
+                indexer = BitIndexer(db.Database(db_fn, verbose=0), DO_NOT_MATCH_RE, DO_NOT_MATCH_RE, verbose_progress=1)
                 indexer.run([datadir])
             self.assertTrue(True)
 
@@ -128,7 +128,7 @@ class Test(TestCase):
             make_unreadable(join(datadir, 'input'))
 
             db_fn = join(tmpdir.name, 'files.sdb')
-            indexer = BitIndexer(db.Database(db_fn, verbose=0), verbose_progress=1)
+            indexer = BitIndexer(db.Database(db_fn, verbose=0), DO_NOT_MATCH_RE, DO_NOT_MATCH_RE, verbose_progress=1)
             with NoStderr() as devnull:
                 indexer.run([datadir])
                 self.assertEqual(devnull.written(), "[P]\n")
@@ -139,7 +139,7 @@ class Test(TestCase):
             write_binary(1024, join(datadir, 'input'))
 
             db_fn = join(tmpdir.name, 'files.sdb')
-            indexer = BitIndexer(db.Database(db_fn, verbose=0), verbose_progress=1)
+            indexer = BitIndexer(db.Database(db_fn, verbose=0), DO_NOT_MATCH_RE, DO_NOT_MATCH_RE, verbose_progress=1)
 
             def mock(*_):
                 error = IOError("dummy io error")
@@ -167,7 +167,7 @@ class Test(TestCase):
 
             db_fn = join(tmpdir.name, 'files.sdb')
             the_db = db.Database(db_fn, verbose=0)
-            indexer = BitIndexer(the_db, verbose_progress=1)
+            indexer = BitIndexer(the_db, DO_NOT_MATCH_RE, DO_NOT_MATCH_RE, verbose_progress=1)
             with NoStderr() as devnull:
                 indexer.run([datadir])
             self.assertTrue(len(the_db.file.find_ids()), len(names))
@@ -185,7 +185,7 @@ class Test(TestCase):
             out.close()
 
             db_fn = join(tmpdir.name, 'files.sdb')
-            indexer = BitIndexer(db.Database(db_fn, verbose=0), verbose_progress=0)
+            indexer = BitIndexer(db.Database(db_fn, verbose=0), DO_NOT_MATCH_RE, DO_NOT_MATCH_RE, verbose_progress=0)
             indexer.run([datadir])
 
             conn = sqlite3.connect(db_fn)
@@ -200,9 +200,32 @@ class Test(TestCase):
                 write_binary(1024, join(datadir, 'input_%03d' % i))
 
             db_fn = join(tmpdir.name, 'files.sdb')
-            indexer = BitIndexer(db.Database(db_fn, verbose=0), verbose_progress=0, commit_every=0.01)
+            indexer = BitIndexer(db.Database(db_fn, verbose=0), DO_NOT_MATCH_RE, DO_NOT_MATCH_RE, verbose_progress=0, commit_every=0.01)
             indexer.run([datadir])
             self.assertTrue(True)
+
+    def test_exclude(self):
+        with TempDir(0) as tmpdir:
+            datadir = tmpdir.create_dir("data")
+            subdir1 = tmpdir.create_dir("data", "sub1")
+            subdir2 = tmpdir.create_dir("data", "sub2")
+            subdir3 = tmpdir.create_dir("data", "sub3")
+
+            write_binary(1024, join(subdir1, 'sub1_input1'))
+            write_binary(1024, join(subdir1, 'sub1_input2'))
+            write_binary(1024, join(subdir2, 'sub2_input1'))
+            write_binary(1024, join(subdir2, 'sub2_input2'))
+            write_binary(1024, join(subdir3, 'sub3_input1'))
+            write_binary(1024, join(subdir3, 'sub3_input2'))
+
+            db_fn = join(tmpdir.name, 'files.sdb')
+            indexer = BitIndexer(db.Database(db_fn, verbose=0), "^.*input2$", "^sub2$", verbose_progress=0)
+            indexer.run([datadir])
+
+            conn = sqlite3.connect(db_fn)
+            self.assertEqual(conn.execute("SELECT dir.name,file.name FROM dir,file WHERE dir.id=file.dirid").fetchall(),
+                             [(subdir1, "sub1_input1"),
+                              (subdir3, "sub3_input1")])
 
 if __name__ == '__main__':
     unittest.main()

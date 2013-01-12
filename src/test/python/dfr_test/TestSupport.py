@@ -2,7 +2,7 @@
 import unittest
 import argparse
 
-from dfr.support import abspath, chunker, format_bytes, format_time_delta, add_common_command_line_arguments
+from dfr.support import abspath, chunker, format_bytes, format_time_delta, add_common_command_line_arguments, globs_to_regexp
 from dfr_test.utils import TestCase
 
 
@@ -49,6 +49,11 @@ class Test(TestCase):
         self.assertTrue(default_db.endswith("files.sdb"))
         self.assertEqual(parser.parse_args(["--db-file", "foo"]).db[0], "foo")
         self.assertEqual(parser.parse_args(["--db-file=foo"]).db[0], "foo")
+
+    def test_globs_to_regexp(self):
+        self.assertEqual(globs_to_regexp(["*"]), "(.*$)")
+        self.assertEqual(globs_to_regexp([".git", "CSV"]), "(\\.git$)|(CSV$)")
+        self.assertEqual(globs_to_regexp(["*(", "[0-9]", "*foo*"]), "(.*\\($)|([0-9]$)|(.*foo.*$)")
 
 if __name__ == '__main__':
     unittest.main()

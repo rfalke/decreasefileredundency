@@ -4,6 +4,7 @@ import sys
 import errno
 import stat
 import time
+import re
 
 from dfr.bit_hashing import get_sha1sums
 from dfr.model import File, Content
@@ -16,9 +17,26 @@ def should_index_file(size):
     return size >= MIN_LENGTH
 
 
+def remove_excluded_names(names, exclude_comp_re):
+    removed = 0
+    i = 0
+    while i < len(names):
+        name = names[i]
+        if exclude_comp_re.match(name):
+            del names[i]
+            removed += 1
+        else:
+            i += 1
+    return removed
+
+
 class BitIndexer:
-    def __init__(self, db, verbose_progress=2, commit_every=12):
+    # pylint: disable=R0913
+    def __init__(self, db, file_excludes_as_re, dir_excludes_as_re,
+                 verbose_progress=2, commit_every=12):
         self.db = db
+        self.compiled_file_excludes = re.compile(file_excludes_as_re)
+        self.compiled_dir_excludes = re.compile(dir_excludes_as_re)
         self.commit_every = commit_every
         self.verbose_progress = verbose_progress
         self.next_commit = None
@@ -60,6 +78,8 @@ class BitIndexer:
 
         dirnames.sort()
         filenames.sort()
+        remove_excluded_names(filenames, self.compiled_file_excludes)
+        remove_excluded_names(dirnames, self.compiled_dir_excludes)
         self.progress("[")
 
         self.db.begin()

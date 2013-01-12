@@ -5,7 +5,7 @@ from os.path import join
 import unittest
 
 from dfr import db
-from dfr_test.utils import TestCase
+from dfr_test.utils import TestCase, DO_NOT_MATCH_RE
 from dfr.bit_indexer import BitIndexer
 from dfr.bit_truncated_finder import BitTruncatedFinder
 
@@ -38,7 +38,7 @@ class Test(TestCase):
             db_fn = join(tmpdir.name, 'files.sdb')
             the_db = db.Database(db_fn, verbose=0)
 
-            indexer = BitIndexer(the_db, verbose_progress=0)
+            indexer = BitIndexer(the_db, DO_NOT_MATCH_RE, DO_NOT_MATCH_RE, verbose_progress=0)
             indexer.run([datadir])
 
             os.remove(join(datadir, 'input_2'))

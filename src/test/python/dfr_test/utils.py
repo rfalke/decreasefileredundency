@@ -4,6 +4,8 @@ import stat
 import unittest
 import sys
 
+DO_NOT_MATCH_RE = "^$"
+
 
 def write_binary(size, filename, offset=0, add=None):
     out = open(filename, "wb")

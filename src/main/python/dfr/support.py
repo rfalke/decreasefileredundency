@@ -1,6 +1,7 @@
 
 import os
 import locale
+import fnmatch
 
 
 def abspath(path):
@@ -54,3 +55,11 @@ def add_common_command_line_arguments(parser):
     parser.add_argument('--db-file', metavar="FILE", dest='db', nargs=1,
                         default=[default_db_file],
                         help='the db file (default: '+default_db_file+')')
+
+
+def globs_to_regexp(globs):
+    """The globs are ORed."""
+    assert globs
+    patterns = ["("+fnmatch.translate(x)+")" for x in globs]
+    pattern = "|".join(patterns)
+    return pattern
