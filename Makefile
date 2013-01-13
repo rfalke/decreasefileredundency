@@ -15,7 +15,7 @@ pylint:
 
 pep8:
 	pep8 src/main/python/dfr/*.py
-	pep8 --max-line-length=200 src/test/python/dfr_test/*.py
+	pep8 --max-line-length=400 src/test/python/dfr_test/*.py
 
 profile:
 	rm -rf /tmp/files_profile.sdb
