@@ -1,5 +1,11 @@
+#!/usr/bin/env python
 
 import argparse
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(sys.argv[0])))
+
 import dfr.db
 from dfr.image_indexer import ImageIndexer
 from dfr.support import add_common_command_line_arguments

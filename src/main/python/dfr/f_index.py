@@ -1,5 +1,11 @@
+#!/usr/bin/env python
 
+import os
+import sys
 import argparse
+
+sys.path.append(os.path.dirname(os.path.dirname(sys.argv[0])))
+
 import dfr.db
 from dfr.bit_indexer import BitIndexer
 from dfr.support import add_common_command_line_arguments, globs_to_regexp

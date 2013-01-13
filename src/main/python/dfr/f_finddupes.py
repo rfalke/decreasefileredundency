@@ -1,7 +1,10 @@
+#!/usr/bin/env python
 
 import argparse
+import sys
 import os
-import locale
+
+sys.path.append(os.path.dirname(os.path.dirname(sys.argv[0])))
 
 import dfr.db
 from dfr.bit_equal_finder import BitEqualFinder
@@ -117,8 +120,6 @@ class InteractiveBitTruncatedResolver(InteractiveResolver):
 
 
 def main():
-    locale.setlocale(locale.LC_ALL, 'en_US')
-
     parser = argparse.ArgumentParser(
         description='Find files with equal or similar content.')
     parser.add_argument('roots', metavar='DIR', nargs='*', default=["."],
