@@ -36,8 +36,8 @@ class BaseFinder:
                 return True
         return False
 
-    def _find_files_for_content(self, content):
-        files = self.db.file.find(contentid=content.id)
+    def _find_files_for_content_id(self, contentid):
+        files = self.db.file.find(contentid=contentid)
 
         for file in files:
             dir = self.db.dir.load(file.dirid)
@@ -68,7 +68,7 @@ class BitEqualFinder(BaseFinder):
 
         for content_index in range(len(contents)):
             content = contents[content_index]
-            files = self._find_files_for_content(content)
+            files = self._find_files_for_content_id(content.id)
 
             pair_index = 0
             for i in range(len(files)):

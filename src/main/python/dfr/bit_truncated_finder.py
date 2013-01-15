@@ -82,7 +82,7 @@ class BitTruncatedFinder(BaseFinder):
             contents = self.db.content.find(first1ksha1=hash)
             assert len(contents) >= 2
             for content in contents:
-                content.files = self._find_files_for_content(content)
+                content.files = self._find_files_for_content_id(content.id)
 
             contents = [x for x in contents if x.files]
             if len(contents) < 2:
