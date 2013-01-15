@@ -24,6 +24,10 @@ def calc_sig1(pairs):
             res[contentid] = sig1
         except IOError:
             res[contentid] = None
+        except AssertionError:
+            res[contentid] = None
+        except TypeError:
+            res[contentid] = None
     return res
 
 
@@ -111,6 +115,9 @@ class ImageIndexer:
     def run(self):
         ids_to_index = self.db.content.find_ids(imageid=Null,
                                                 sort="first1ksha1 ASC")
+        if not ids_to_index:
+            self.progress("INFO: Have calculated all image signatures.\n")
+            return
         current_time = time.time()
         self.start = current_time
         self.next_commit = current_time + self.commit_every
