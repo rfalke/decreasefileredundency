@@ -287,8 +287,12 @@ CREATE TABLE image (
   sig2 TEXT NOT NULL
 )''')
             self.conn.execute('''
-CREATE INDEX file_contentid ON FILE (
+CREATE INDEX file_contentid ON file (
   contentid
+)''')
+            self.conn.execute('''
+CREATE INDEX content_imageid ON content (
+  imageid
 )''')
 
     def begin(self):
