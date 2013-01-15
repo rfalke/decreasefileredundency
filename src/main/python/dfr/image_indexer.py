@@ -91,8 +91,11 @@ class ImageIndexer:
                 self.db.imagehash.save(ImageHash(contentid, type, sig))
 
     def run(self):
-        ids_to_index = self.db.content.find_ids(isimage=1,
-                                                sort="first1ksha1 ASC")
+        indexed_ids = set([x.contentid for x in self.db.imagehash.find()])
+        tmp = set(self.db.content.find_ids(isimage=1,
+                                           sort="first1ksha1 ASC"))
+        ids_to_index = list(tmp - indexed_ids)
+        
         if not ids_to_index:
             self.progress("INFO: Have calculated all image signatures.\n")
             return
