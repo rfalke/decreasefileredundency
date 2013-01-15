@@ -5,7 +5,7 @@ import unittest
 from sqlite3 import IntegrityError
 
 from dfr.db import Database, Repo, Null, In
-from dfr.model import Dir, File, Content, Image
+from dfr.model import Dir, File, Content, ImageHash, ImageCmp, ImageFeedback
 from dfr_test.utils import make_unwriteable, TestCase, NoStderr
 
 
@@ -147,11 +147,11 @@ class Test(TestCase):
             self.assertEqual(obj1, Content(1, "a", "b", "c", 1, id=1))
             self.assertEqual(repo.load(1), obj1)
 
-            obj2 = Content(2, "a", "d", "e", None)
+            obj2 = Content(2, "a", "d", "e", 0)
             repo.save(obj2)
             self.assertEqual(obj2.id, 2)
 
-            obj3 = Content(1, "f", "g", "e", 2)
+            obj3 = Content(1, "f", "g", "e", 1)
             repo.save(obj3)
             self.assertEqual(obj3.id, 3)
 
@@ -161,8 +161,6 @@ class Test(TestCase):
             self.assert_lists_have_same_items(repo.find_ids(fullsha1="a"), [1, 2])
             self.assert_lists_have_same_items(repo.find_ids(partsha1s="e"), [2, 3])
             self.assert_lists_have_same_items(repo.find_ids(size=99), [])
-            self.assert_lists_have_same_items(repo.find_ids(imageid=Null), [2])
-            self.assert_lists_have_same_items(repo.find_ids(imageid=Null()), [2])
 
             self.assert_lists_have_same_items(repo.find(), [obj1, obj2, obj3])
             self.assert_lists_have_same_items(repo.find(size=1), [obj1, obj3])
@@ -190,39 +188,56 @@ class Test(TestCase):
             self.assert_lists_have_same_items(repo.find_ids(at_least_referenced=1), [99, 100])
             self.assert_lists_have_same_items(repo.find_ids(at_least_referenced=2), [99])
 
-    def test_image_repo(self):
+    def test_imagehash_repo(self):
         with TempDir() as tmpdir:
             db_fn = os.path.join(tmpdir.name, 'files.sdb')
-            repo = Database(db_fn, verbose=0).image
+            repo = Database(db_fn, verbose=0).imagehash
 
-            obj1 = Image("sig1", "sig2")
-            self.assertEqual(obj1, Image("sig1", "sig2"))
+            obj1 = ImageHash(3, 4, "hash1")
+            self.assertEqual(obj1, ImageHash(3, 4, "hash1"))
             repo.save(obj1)
             self.assertEqual(obj1.id, 1)
-            self.assertEqual(obj1, Image("sig1", "sig2", id=1))
+            self.assertEqual(obj1, ImageHash(3, 4, "hash1", id=1))
             self.assertEqual(repo.load(1), obj1)
 
-            obj2 = Image("sig3", "sig4")
+            obj2 = ImageHash(5, 6, None)
             repo.save(obj2)
             self.assertEqual(obj2.id, 2)
 
-            self.assert_lists_have_same_items(repo.find_ids(), [1, 2])
-            self.assert_lists_have_same_items(repo.find_ids(sig1="sig1"), [1])
-            self.assert_lists_have_same_items(repo.find_ids(id=2), [2])
-            self.assert_lists_have_same_items(repo.find_ids(sig1="hello"), [])
+            self.assert_lists_have_same_items(repo.find_ids(hash=Null), [2])
+            self.assert_lists_have_same_items(repo.find_ids(hash=Null()), [2])
 
-            self.assert_lists_have_same_items(repo.find(), [obj1, obj2])
-            self.assert_lists_have_same_items(repo.find(sig1="sig1"), [obj1])
-            self.assert_lists_have_same_items(repo.find(sig1="hello"), [])
-            self.assert_lists_have_same_items(repo.find(id=In([1, 2])), [obj1, obj2])
+    def test_imagecmp_repo(self):
+        with TempDir() as tmpdir:
+            db_fn = os.path.join(tmpdir.name, 'files.sdb')
+            repo = Database(db_fn, verbose=0).imagecmp
 
-            obj1.sig1 = "new"
+            obj1 = ImageCmp(3, 4, 5, 0.12)
+            self.assertEqual(obj1, ImageCmp(3, 4, 5, 0.12))
             repo.save(obj1)
-
+            self.assertEqual(obj1.id, 1)
+            self.assertEqual(obj1, ImageCmp(3, 4, 5, 0.12, id=1))
             self.assertEqual(repo.load(1), obj1)
 
-            repo.delete(obj1)
-            self.assert_lists_have_same_items(repo.find_ids(), [2])
+            obj2 = ImageCmp(6, 7, 8, 0.51)
+            repo.save(obj2)
+            self.assertEqual(obj2.id, 2)
+
+    def test_imagefeedback_repo(self):
+        with TempDir() as tmpdir:
+            db_fn = os.path.join(tmpdir.name, 'files.sdb')
+            repo = Database(db_fn, verbose=0).imagefeedback
+
+            obj1 = ImageFeedback(3, 4, 0)
+            self.assertEqual(obj1, ImageFeedback(3, 4, 0))
+            repo.save(obj1)
+            self.assertEqual(obj1.id, 1)
+            self.assertEqual(obj1, ImageFeedback(3, 4, 0, id=1))
+            self.assertEqual(repo.load(1), obj1)
+
+            obj2 = ImageFeedback(5, 6, 1)
+            repo.save(obj2)
+            self.assertEqual(obj2.id, 2)
 
 
 if __name__ == '__main__':

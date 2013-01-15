@@ -5,7 +5,7 @@ import errno
 import sys
 
 
-from dfr.model import Dir, File, Content, Image
+from dfr.model import Dir, File, Content, ImageHash, ImageCmp, ImageFeedback
 
 
 def makedirs(dirname):
@@ -198,7 +198,7 @@ class ContentRepo(Repo):
     def __init__(self, conn):
         Repo.__init__(self, conn, "content", Content,
                       ["size", "fullsha1", "first1ksha1",
-                       "partsha1s", "imageid"])
+                       "partsha1s", "isimage"])
 
     def build_where(self, query, builder):
         if "at_least_referenced" in query:
@@ -227,18 +227,46 @@ class ContentRepo(Repo):
         return Content(size, fullsha1, first1ksha1, partsha1s, imageid, id=id)
 
 
-class ImageRepo(Repo):
+class ImageHashRepo(Repo):
     def __init__(self, conn):
-        Repo.__init__(self, conn, "image", Image,
-                      ["sig1", "sig2"])
+        Repo.__init__(self, conn, "imagehash", ImageHash,
+                      ["contentid", "iht", "hash"])
 
     def build_where(self, query, builder):
         Repo.build_where(self, query, builder)
         assert len(query) == 0, query
 
     def construct(self, values):
-        id, sig1, sig2 = values
-        return Image(sig1, sig2, id=id)
+        id, contentid, iht, hash = values
+        return ImageHash(contentid, iht, hash, id=id)
+
+
+class ImageCmpRepo(Repo):
+    def __init__(self, conn):
+        Repo.__init__(self, conn, "imagecmp", ImageCmp,
+                      ["contentid1", "contentid2", "iht", "similarity"])
+
+    def build_where(self, query, builder):
+        Repo.build_where(self, query, builder)
+        assert len(query) == 0, query
+
+    def construct(self, values):
+        id, contentid1, contentid2, iht, similarity = values
+        return ImageCmp(contentid1, contentid2, iht, similarity, id=id)
+
+
+class ImageFeedbackRepo(Repo):
+    def __init__(self, conn):
+        Repo.__init__(self, conn, "imagefeedback", ImageFeedback,
+                      ["contentid1", "contentid2", "aresimilar"])
+
+    def build_where(self, query, builder):
+        Repo.build_where(self, query, builder)
+        assert len(query) == 0, query
+
+    def construct(self, values):
+        id, contentid1, contentid2, aresimilar = values
+        return ImageFeedback(contentid1, contentid2, aresimilar, id=id)
 
 
 class Database:
@@ -250,7 +278,9 @@ class Database:
         self.dir = DirRepo(self.conn)
         self.file = FileRepo(self.conn)
         self.content = ContentRepo(self.conn)
-        self.image = ImageRepo(self.conn)
+        self.imagehash = ImageHashRepo(self.conn)
+        self.imagecmp = ImageCmpRepo(self.conn)
+        self.imagefeedback = ImageFeedbackRepo(self.conn)
 
         if do_init:
             if verbose:
@@ -277,22 +307,37 @@ CREATE TABLE content (
   fullsha1 TEXT NOT NULL,
   size INTEGER NOT NULL,
   partsha1s TEXT NOT NULL,
-  imageid INTEGER NULL,
-  UNIQUE (fullsha1,size)
+  isimage INTEGER NOT NULL,
+  UNIQUE (fullsha1, size)
 )''')
             self.conn.execute('''
-CREATE TABLE image (
+CREATE TABLE imagehash (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  sig1 TEXT NOT NULL,
-  sig2 TEXT NOT NULL
+  contentid INTEGER NON NULL,
+  iht INTEGER NOT NULL,
+  hash TEXT NULL,
+  UNIQUE (contentid, iht)
+)''')
+            self.conn.execute('''
+CREATE TABLE imagecmp (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  contentid1 INTEGER NON NULL,
+  contentid2 INTEGER NON NULL,
+  iht INTEGER NOT NULL,
+  similarity REAL NOT NULL,
+  UNIQUE (contentid1, contentid2, iht)
+)''')
+            self.conn.execute('''
+CREATE TABLE imagefeedback (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  contentid1 INTEGER NON NULL,
+  contentid2 INTEGER NON NULL,
+  aresimilar INTEGER NOT NULL,
+  UNIQUE (contentid1, contentid2)
 )''')
             self.conn.execute('''
 CREATE INDEX file_contentid ON file (
   contentid
-)''')
-            self.conn.execute('''
-CREATE INDEX content_imageid ON content (
-  imageid
 )''')
 
     def begin(self):

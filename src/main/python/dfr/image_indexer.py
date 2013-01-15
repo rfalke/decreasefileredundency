@@ -5,8 +5,7 @@ import time
 import multiprocessing
 
 from dfr.image_hashing import get_image_signature1, get_image_signatures2
-from dfr.model import Image
-from dfr.db import Null
+from dfr.model import ImageHash
 from dfr.support import chunker, format_time_delta
 
 
@@ -22,11 +21,7 @@ def calc_sig1(pairs):
             sig1 = ["%x" % (2**16*x) for x in sig1]
             sig1 = " ".join(sig1)
             res[contentid] = sig1
-        except IOError:
-            res[contentid] = None
-        except AssertionError:
-            res[contentid] = None
-        except TypeError:
+        except (IOError, AssertionError, TypeError):
             res[contentid] = None
     return res
 
@@ -90,30 +85,13 @@ class ImageIndexer:
         return result
 
     def save_results(self, all_results):
-        content_id_to_image = {}
         for type, results in all_results:
             for contentid in results:
                 sig = results[contentid]
-                if contentid not in content_id_to_image:
-                    content_id_to_image[contentid] = Image(None, None)
-                assert type in [1, 2]
-                if type == 1:
-                    content_id_to_image[contentid].sig1 = sig
-                elif type == 2:
-                    content_id_to_image[contentid].sig2 = sig
-        for contentid in content_id_to_image:
-            content = self.db.content.load(contentid)
-            image = content_id_to_image[contentid]
-            if image.sig1 and image.sig2:
-                self.db.image.save(image)
-
-                content.imageid = image.id
-            else:
-                content.imageid = -1
-            self.db.content.save(content)
+                self.db.imagehash.save(ImageHash(contentid, type, sig))
 
     def run(self):
-        ids_to_index = self.db.content.find_ids(imageid=Null,
+        ids_to_index = self.db.content.find_ids(isimage=1,
                                                 sort="first1ksha1 ASC")
         if not ids_to_index:
             self.progress("INFO: Have calculated all image signatures.\n")

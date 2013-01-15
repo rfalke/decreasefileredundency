@@ -38,9 +38,9 @@ class Test(TestCase):
             self.assertEqual(conn.execute("select id,dirid,name,contentid from file").fetchall(),
                              [(1, 2, u'input1', 1), (2, 2, u'input2', 2), (3, 3, u'input3', 3)])
             self.assertEqual(conn.execute("select * from content").fetchall(),
-                             [(1, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', 1024, u'', -1),
-                              (2, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'409c9978384c2832af4a98bafe453dfdaa8e8054', 1025, u'', -1),
-                              (3, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'76f936767b092576521501bdb344aa7a632b88b8', 1026, u'', -1)])
+                             [(1, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', 1024, u'', 0),
+                              (2, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'409c9978384c2832af4a98bafe453dfdaa8e8054', 1025, u'', 0),
+                              (3, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'76f936767b092576521501bdb344aa7a632b88b8', 1026, u'', 0)])
 
             indexer.run([datadir])
 
@@ -49,9 +49,9 @@ class Test(TestCase):
             self.assertEqual(conn.execute("select id,dirid,name,contentid from file").fetchall(),
                              [(1, 2, u'input1', 1), (2, 2, u'input2', 2), (3, 3, u'input3', 3)])
             self.assertEqual(conn.execute("select * from content").fetchall(),
-                             [(1, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', 1024, u'', -1),
-                              (2, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'409c9978384c2832af4a98bafe453dfdaa8e8054', 1025, u'', -1),
-                              (3, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'76f936767b092576521501bdb344aa7a632b88b8', 1026, u'', -1)])
+                             [(1, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', 1024, u'', 0),
+                              (2, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'409c9978384c2832af4a98bafe453dfdaa8e8054', 1025, u'', 0),
+                              (3, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'76f936767b092576521501bdb344aa7a632b88b8', 1026, u'', 0)])
 
     def test_removed_file(self):
         with TempDir() as tmpdir:
@@ -74,9 +74,9 @@ class Test(TestCase):
             self.assertEqual(conn.execute("select id,dirid,name,contentid from file").fetchall(),
                              [(1, 2, u'input1', 1), (2, 2, u'input2', 2), (3, 3, u'input3', 3)])
             self.assertEqual(conn.execute("select * from content").fetchall(),
-                             [(1, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', 1024, u'', -1),
-                              (2, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'409c9978384c2832af4a98bafe453dfdaa8e8054', 1025, u'', -1),
-                              (3, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'76f936767b092576521501bdb344aa7a632b88b8', 1026, u'', -1)])
+                             [(1, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', 1024, u'', 0),
+                              (2, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'409c9978384c2832af4a98bafe453dfdaa8e8054', 1025, u'', 0),
+                              (3, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'76f936767b092576521501bdb344aa7a632b88b8', 1026, u'', 0)])
 
             os.remove(join(subdir1, 'input1'))
             indexer.run([datadir])
@@ -86,9 +86,9 @@ class Test(TestCase):
             self.assertEqual(conn.execute("select id,dirid,name,contentid from file").fetchall(),
                              [(2, 2, u'input2', 2), (3, 3, u'input3', 3)])
             self.assertEqual(conn.execute("select * from content").fetchall(),
-                             [(1, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', 1024, u'', -1),
-                              (2, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'409c9978384c2832af4a98bafe453dfdaa8e8054', 1025, u'', -1),
-                              (3, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'76f936767b092576521501bdb344aa7a632b88b8', 1026, u'', -1)])
+                             [(1, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', 1024, u'', 0),
+                              (2, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'409c9978384c2832af4a98bafe453dfdaa8e8054', 1025, u'', 0),
+                              (3, u'5b00669c480d5cffbdfa8bdba99561160f2d1b77', u'76f936767b092576521501bdb344aa7a632b88b8', 1026, u'', 0)])
 
     def test_content_changes(self):
         with TempDir() as tmpdir:
@@ -190,7 +190,7 @@ class Test(TestCase):
 
             conn = sqlite3.connect(db_fn)
             self.assertEqual(conn.execute("select * from content").fetchall(),
-                             [(1, u'a128af6716f4a73cc0a490ee5ba2fd87a56823fe', u'04c942989681cbf2933bef10eb4afcc5312c9b3f', 1032, u'', None)])
+                             [(1, u'a128af6716f4a73cc0a490ee5ba2fd87a56823fe', u'04c942989681cbf2933bef10eb4afcc5312c9b3f', 1032, u'', 1)])
 
     def test_for_coverage(self):
         with TempDir() as tmpdir:
