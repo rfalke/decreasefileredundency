@@ -44,7 +44,7 @@ class Test(TestCase):
             indexer = ImageIndexer(the_db, verbose_progress=0)
             indexer.run()
 
-            self.verify_db_rows_for_big_images(db_fn)
+            self.assertTrue(len(the_db.content.find()) == 0)
 
     def verify_db_rows_for_big_images(self, db_fn):
         conn = sqlite3.connect(db_fn)
