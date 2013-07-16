@@ -110,6 +110,9 @@ class InteractiveBitEqualResolver(InteractiveResolver):
             self._delete(to_delete)
             break
 
+    def finished(self):
+        pass
+
 
 class CsvBitTruncatedResolver:
     def __init__(self):
