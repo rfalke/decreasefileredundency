@@ -1,4 +1,4 @@
-COVERAGE=coverage-2.6
+COVERAGE=coverage-2.7
 
 tests: pep8 pylint python_tests shell_tests
 

@@ -51,9 +51,9 @@ class Test(TestCase):
         self.assertEqual(parser.parse_args(["--db-file=foo"]).db[0], "foo")
 
     def test_globs_to_regexp(self):
-        self.assertEqual(globs_to_regexp(["*"]), "(.*$)")
-        self.assertEqual(globs_to_regexp([".git", "CSV"]), "(\\.git$)|(CSV$)")
-        self.assertEqual(globs_to_regexp(["*(", "[0-9]", "*foo*"]), "(.*\\($)|([0-9]$)|(.*foo.*$)")
+        self.assertEqual(globs_to_regexp(["*"]), "(.*\\Z(?ms))")
+        self.assertEqual(globs_to_regexp([".git", "CSV"]), "(\\.git\\Z(?ms))|(CSV\\Z(?ms))")
+        self.assertEqual(globs_to_regexp(["*(", "[0-9]", "*foo*"]), "(.*\\(\\Z(?ms))|([0-9]\\Z(?ms))|(.*foo.*\\Z(?ms))")
 
 if __name__ == '__main__':
     unittest.main()
