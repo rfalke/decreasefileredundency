@@ -91,9 +91,6 @@ class BitIndexer:
                       fmt(self.skipped_files), 3)
         self.progress("       %16s skipped non regular files\n" %
                       fmt(self.skipped_non_regular_files), 3)
-
-        self.progress("       %16s skipped non regular files\n" %
-                      fmt(self.skipped_non_regular_files), 3)
         self.progress("       %16s skipped small files\n" %
                       fmt(self.skipped_small_files), 3)
         self.progress("       %16s unchanged files \n" %
