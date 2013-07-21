@@ -49,11 +49,11 @@ def make_unreadable(path):
 class TestCase(unittest.TestCase):
 
     def assert_lists_have_same_items(self, actual_list, expected_list):
-        self.assertEqual(len(actual_list), len(expected_list))
         for i in actual_list:
-            self.assertTrue(i in expected_list)
+            self.assertTrue(i in expected_list, "The actual item %r is not expected" % (i,))
         for i in expected_list:
-            self.assertTrue(i in actual_list)
+            self.assertTrue(i in actual_list, "The expected item %r was not found" % (i,))
+        self.assertEqual(len(actual_list), len(expected_list))
 
 
 class Devnull(object):

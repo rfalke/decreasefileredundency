@@ -58,7 +58,7 @@ class Test(unittest.TestCase):
              None,
              None,
              '0000000000000000000000000000000000000000000000000000000000000000',
-             'ff80ff80ff80ff80ff80ff80ff80ffffffff01ff01ff01ff01ff01ff01ff01ff'])
+             'ff80ff80ff80ff80ff80ff80ffffffffffff03ff03ff03ff03ff03ff03ff03ff'])
 
     def test_signature2_for_coverage(self):
         CAUSE_UNEQUAL_LINES.append(1)

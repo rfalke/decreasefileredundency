@@ -201,7 +201,7 @@ class Test(TestCase):
 
             db_fn = join(tmpdir.name, 'files.sdb')
             indexer = BitIndexer(db.Database(db_fn, verbose=0), DO_NOT_MATCH_RE, DO_NOT_MATCH_RE,
-                                 verbose_progress=0, commit_every=0.01, full_stats_every=0.01, dir_warn_threshold=0.01)
+                                 verbose_progress=0, commit_every=0.001, full_stats_every=0.001, dir_warn_threshold=0.001)
             indexer.run([datadir])
             self.assertTrue(True)
 
