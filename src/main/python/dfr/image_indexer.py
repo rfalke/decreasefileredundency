@@ -5,7 +5,7 @@ import time
 import multiprocessing
 
 from dfr.image_hashing import get_image_signature1, get_image_signatures2, \
-    get_image_signature3, get_image_signature4
+    get_image_signature3, get_image_signature4, get_image_signature5
 from dfr.model import ImageHash
 from dfr.support import chunker, format_time_delta
 
@@ -64,8 +64,21 @@ def calc_sig4(pairs):
     return res
 
 
+def calc_sig5(pairs):
+    res = {}
+    for contentid, files in pairs:
+        filename = files[0]
+        try:
+            sig = get_image_signature5(filename)
+            sig = '%016x' % sig
+            res[contentid] = sig
+        except (IOError, AssertionError, TypeError):
+            res[contentid] = None
+    return res
+
+
 def execute_job(job):
-    assert job.type in [1, 2, 3, 4]
+    assert job.type in [1, 2, 3, 4, 5]
     if job.type == 1:
         return (1, calc_sig1(job.pairs))
     elif job.type == 2:
@@ -74,6 +87,8 @@ def execute_job(job):
         return (3, calc_sig3(job.pairs))
     elif job.type == 4:
         return (4, calc_sig4(job.pairs))
+    elif job.type == 5:
+        return (5, calc_sig5(job.pairs))
 
 
 class Job:
@@ -108,6 +123,7 @@ class ImageIndexer:
             jobs.append(Job(2, todo))
             jobs.append(Job(3, todo))
             jobs.append(Job(4, todo))
+            jobs.append(Job(5, todo))
         return jobs
 
     def execute_jobs(self, jobs):

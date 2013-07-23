@@ -1,7 +1,7 @@
 import unittest
 
 from dfr.image_hashing import get_image_signature1, get_image_signatures2, \
-    get_image_signature3, get_image_signature4, CAUSE_UNEQUAL_LINES
+    get_image_signature3, get_image_signature4, get_image_signature5, CAUSE_UNEQUAL_LINES
 
 
 class Test(unittest.TestCase):
@@ -123,6 +123,16 @@ class Test(unittest.TestCase):
         assert_sig4("src/test/images/all_red.png", "ffffffffffffffff")
         assert_sig4("src/test/images/all_white_gray.png", "ffffffffffffffff")
         assert_sig4("src/test/images/all_white_rgb.png", "ffffffffffffffff")
+
+    def test_signature5(self):
+        def assert_sig5(filename, expected):
+            sig = get_image_signature5(filename)
+            self.assertEqual("%016x" % sig, expected)
+
+        assert_sig5("src/test/images/big/nice-map-big.jpeg", "3929ca47ab8c956b")
+        self.assertEqual(get_image_signature5("src/test/images/big/Intercom_PCB_mit_Best.Druck.gif"), None)
+        self.assertEqual(get_image_signature5("Makefile"), None)
+        self.assertEqual(get_image_signature5("does not exist"), None)
 
 if __name__ == '__main__':
     unittest.main()

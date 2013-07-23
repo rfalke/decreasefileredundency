@@ -54,7 +54,7 @@ class ImageSimilarFinder(BaseFinder):
     def __init__(self, db, roots, sig_type, verbose_progress=1):
         BaseFinder.__init__(self, db, roots)
         self.verbose_progress = verbose_progress
-        assert sig_type in [1, 2, 3, 4]
+        assert sig_type in [1, 2, 3, 4, 5]
         self.iht = sig_type
         if sig_type == 1:
             self.prepare = prepare_sig1
@@ -66,6 +66,9 @@ class ImageSimilarFinder(BaseFinder):
             self.prepare = prepare_hex_sig
             self.compare = compare_sig_by_comparing_64_bits
         elif sig_type == 4:
+            self.prepare = prepare_hex_sig
+            self.compare = compare_sig_by_comparing_64_bits
+        elif sig_type == 5:
             self.prepare = prepare_hex_sig
             self.compare = compare_sig_by_comparing_64_bits
         self.done = None

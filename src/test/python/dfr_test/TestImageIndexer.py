@@ -52,11 +52,12 @@ class Test(TestCase):
                             "FROM file,content,imagehash " +
                             "WHERE file.contentid = content.id AND content.id = imagehash.contentid " +
                             "ORDER BY file.name").fetchall()
-        self.assertEqual(len(rows), 4 * 11)
+        self.assertEqual(len(rows), 5 * 11)
         self.assertIn((u'Nice-Bee.jpeg', 1, u'646 d3c f3f da9 e83 13da 1c6b 1d4c 1faa 17ce 18d7 f31 92b 50f 29a 326 60a d23 b5e a61 afa c71 1285 1a25 256c 1a4f 1f47 1a3d e0d 67f 253 2d9 ca3 13e3 ce4 92b 7fc 90d 745 79e 90d b88 ea1 188c 203b 26ac 1a31 c9f'), rows)
         self.assertIn((u'Nice-Bee.jpeg', 2, u'c000c000c3fec3ffc7ffc7ff8fff1fff7fff7fff7ffe0ff801f8e1fcf9ffffc7'), rows)
         self.assertIn((u'Nice-Bee.jpeg', 3, u'cd3ac3371dab6360'), rows)
         self.assertIn((u'Nice-Bee.jpeg', 4, u'eff8f0c080d7f93c'), rows)
+        self.assertIn((u'Nice-Bee.jpeg', 5, u'9378f06307fe7083'), rows)
 
     def test_coverage(self):
         with TempDir() as tmpdir:

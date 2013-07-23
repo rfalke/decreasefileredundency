@@ -2,6 +2,9 @@ from PIL import Image
 from PIL import ImageStat
 import tempfile
 import os
+import ctypes
+
+PHASH_LIB = ctypes.CDLL('libpHash.so.0', use_errno=True)
 
 
 def shell_quote(str):
@@ -164,3 +167,16 @@ for the algorithm which formed the inspiration for this algorithm.
             average_hash |= 1 * (value >= average_value)
 
     return average_hash
+
+
+def get_image_signature5(filename):
+    """
+From https://github.com/mk-fg/image-deduplication-tool
+
+Uses pHash.
+    """
+
+    phash = ctypes.c_uint64()
+    if PHASH_LIB.ph_dct_imagehash(filename, ctypes.pointer(phash)):
+        return None
+    return phash.value
