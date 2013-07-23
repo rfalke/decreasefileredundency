@@ -1,4 +1,3 @@
-
 from PIL import Image
 import tempfile
 import os
@@ -81,3 +80,51 @@ def get_image_signatures2(filenames):
             os.remove(outname)
     finally:
         os.remove(inname)
+
+
+def get_image_signature3(filename):
+    """
+    from http://folk.uio.no/davidjo/DifferenceHash.py
+
+A program to calculate a hash of an image based on visual characteristics.
+Author: David J. Oftedal.
+
+Thanks to Dr. Neal Krawetz:
+http://www.hackerfactor.com/blog/index.php?/archives/432-Looks-Like-It.html
+for the algorithm which formed the inspiration for this algorithm.
+    """
+    the_image = Image.open(filename)
+
+    # Convert the image to 8-bit grayscale.
+    the_image = the_image.convert("L")  # 8-bit grayscale
+
+    # Squeeze it down to an 8x8 image.
+    the_image = the_image.resize((8, 8), Image.ANTIALIAS)
+
+    # Go through the image pixel by pixel.
+    # Return 1-bits when a pixel is equal to or brighter than the previous
+    # pixel, and 0-bits when it's below.
+
+    # Use the 64th pixel as the 0th pixel.
+    previous_pixel = the_image.getpixel((0, 7))
+
+    difference_hash = 0
+    for row in xrange(0, 8, 2):
+
+        # Go left to right on odd rows.
+        for col in xrange(8):
+            difference_hash <<= 1
+            pixel = the_image.getpixel((col, row))
+            difference_hash |= 1 * (pixel >= previous_pixel)
+            previous_pixel = pixel
+
+        row += 1
+
+        # Go right to left on even rows.
+        for col in xrange(7, -1, -1):
+            difference_hash <<= 1
+            pixel = the_image.getpixel((col, row))
+            difference_hash |= 1 * (pixel >= previous_pixel)
+            previous_pixel = pixel
+
+    return difference_hash

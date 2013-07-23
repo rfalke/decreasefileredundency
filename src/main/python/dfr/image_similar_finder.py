@@ -25,10 +25,12 @@ def compare_sig1(hash1, hash2):
     error = 0
     for i in range(len(hash1)):
         error += abs(hash1[i] - hash2[i])
-    return 1-error / float(2**17)
+    similarity = 1-error / float(2**17)
+    assert 0 <= similarity <= 1, similarity
+    return similarity
 
 
-def prepare_sig2(hash):
+def prepare_hex_sig(hash):
     return int(hash, 16)
 
 
@@ -36,6 +38,15 @@ def compare_sig2(hash1, hash2):
     xor = hash1 ^ hash2
     distance = bin(xor).count("1")
     similarity = 1-distance/256.0
+    assert 0 <= similarity <= 1, similarity
+    return similarity
+
+
+def compare_sig3(hash1, hash2):
+    xor = hash1 ^ hash2
+    distance = bin(xor).count("1")
+    similarity = 1-distance/64.0
+    assert 0 <= similarity <= 1, similarity
     return similarity
 
 
@@ -43,14 +54,17 @@ class ImageSimilarFinder(BaseFinder):
     def __init__(self, db, roots, sig_type, verbose_progress=1):
         BaseFinder.__init__(self, db, roots)
         self.verbose_progress = verbose_progress
-        assert sig_type in [1, 2]
+        assert sig_type in [1, 2, 3]
         self.iht = sig_type
         if sig_type == 1:
             self.prepare = prepare_sig1
             self.compare = compare_sig1
-        else:
-            self.prepare = prepare_sig2
+        elif sig_type == 2:
+            self.prepare = prepare_hex_sig
             self.compare = compare_sig2
+        elif sig_type == 3:
+            self.prepare = prepare_hex_sig
+            self.compare = compare_sig3
         self.done = None
         self.num_todo = None
 

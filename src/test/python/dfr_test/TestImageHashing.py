@@ -1,7 +1,6 @@
-
 import unittest
 
-from dfr.image_hashing import get_image_signature1, get_image_signatures2, CAUSE_UNEQUAL_LINES
+from dfr.image_hashing import get_image_signature1, get_image_signatures2, get_image_signature3, CAUSE_UNEQUAL_LINES
 
 
 class Test(unittest.TestCase):
@@ -68,6 +67,33 @@ class Test(unittest.TestCase):
         except KeyboardInterrupt:
             pass
 
+    def test_signature3(self):
+        def assert_sig3(filename, expected):
+            sig = get_image_signature3(filename)
+            self.assertEqual("%016x" % sig, expected)
+        assert_sig3("src/test/images/big/Organigramm_deut_2_Seewiesen-1_png.png", "0f042da70d87cfa7")
+        assert_sig3("src/test/images/big/free-your-mind-Seite2.bmp", "37a733b533b737b7")
+        assert_sig3("src/test/images/pattern1.png", "5d227f22a27f225d")
+        assert_sig3("src/test/images/big/bird_bird_bird_png_format_by_chimonk-d37tayt.png", "622a4d0eab9b95d9")
+        assert_sig3("src/test/images/big/sample_03.jpeg", "779ba5b1334b1993")
+        assert_sig3("src/test/images/big/NENG1614.bmp", "799d2d52b8a5a4bb")
+        assert_sig3("src/test/images/pattern2.png", "7fff7fffffff7fff")
+        assert_sig3("src/test/images/white_2_grays_and_black.png", "80ff80ff80ff80ff")
+        assert_sig3("src/test/images/big/Sunflower_Metalhead64_edited.png", "87070f0787878f8f")
+        assert_sig3("src/test/images/big/nice-map-big.jpeg", "88eda7a64d637cec")
+        assert_sig3("src/test/images/big/globe_west_2048.jpeg", "b1f8e0fcf26e78b9")
+        assert_sig3("src/test/images/big/Nice-Bee.jpeg", "cd3ac3371dab6360")
+        assert_sig3("src/test/images/big/Intercom_PCB_mit_Best.Druck.gif", "da68e4deda68e4de")
+        assert_sig3("src/test/images/python-logo-master-v3-TM.png", "eb49b795afe1bbff")
+        assert_sig3("src/test/images/red_green_blue.png", "f0f8f0f8f0f8f0f8")
+        assert_sig3("src/test/images/pattern3.png", "ff7fff7f7f7fff7f")
+        assert_sig3("src/test/images/all_black_gray.png", "ffffffffffffffff")
+        assert_sig3("src/test/images/all_black_rgb.png", "ffffffffffffffff")
+        assert_sig3("src/test/images/all_blue.png", "ffffffffffffffff")
+        assert_sig3("src/test/images/all_green.png", "ffffffffffffffff")
+        assert_sig3("src/test/images/all_red.png", "ffffffffffffffff")
+        assert_sig3("src/test/images/all_white_gray.png", "ffffffffffffffff")
+        assert_sig3("src/test/images/all_white_rgb.png", "ffffffffffffffff")
 
 if __name__ == '__main__':
     unittest.main()

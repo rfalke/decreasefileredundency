@@ -151,6 +151,9 @@ class InteractiveBitTruncatedResolver(InteractiveResolver):
             else:
                 continue
 
+    def finished(self):
+        pass
+
 
 class ImageRelated:
     def __init__(self, path, max_image_size, background):
