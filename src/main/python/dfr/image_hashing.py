@@ -1,4 +1,5 @@
 from PIL import Image
+from PIL import ImageStat
 import tempfile
 import os
 
@@ -128,3 +129,38 @@ for the algorithm which formed the inspiration for this algorithm.
             previous_pixel = pixel
 
     return difference_hash
+
+
+def get_image_signature4(filename):
+    """
+    from http://folk.uio.no/davidjo/AverageHash.py
+
+A program to calculate a hash of an image based on visual characteristics.
+Author: David J. Oftedal.
+
+Thanks to Dr. Neal Krawetz:
+http://www.hackerfactor.com/blog/index.php?/archives/432-Looks-Like-It.html
+for the algorithm which formed the inspiration for this algorithm.
+    """
+    the_image = Image.open(filename)
+
+    # Convert the image to 8-bit grayscale.
+    the_image = the_image.convert("L")  # 8-bit grayscale
+
+    # Squeeze it down to an 8x8 image.
+    the_image = the_image.resize((8, 8), Image.ANTIALIAS)
+
+    # Calculate the average value.
+    average_value = ImageStat.Stat(the_image).mean[0]
+
+    # Go through the image pixel by pixel.
+    # Return 1-bits when the tone is equal to or above the average,
+    # and 0-bits when it's below the average.
+    average_hash = 0
+    for row in xrange(8):
+        for col in xrange(8):
+            average_hash <<= 1
+            value = the_image.getpixel((col, row))
+            average_hash |= 1 * (value >= average_value)
+
+    return average_hash

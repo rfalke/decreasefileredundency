@@ -5,7 +5,7 @@ import time
 import multiprocessing
 
 from dfr.image_hashing import get_image_signature1, get_image_signatures2, \
-    get_image_signature3
+    get_image_signature3, get_image_signature4
 from dfr.model import ImageHash
 from dfr.support import chunker, format_time_delta
 
@@ -18,10 +18,10 @@ def calc_sig1(pairs):
     for contentid, files in pairs:
         filename = files[0]
         try:
-            sig1 = get_image_signature1(filename)
-            sig1 = ["%x" % (2**16*x) for x in sig1]
-            sig1 = " ".join(sig1)
-            res[contentid] = sig1
+            sig = get_image_signature1(filename)
+            sig = ["%x" % (2**16*x) for x in sig]
+            sig = " ".join(sig)
+            res[contentid] = sig
         except (IOError, AssertionError, TypeError):
             res[contentid] = None
     return res
@@ -43,22 +43,37 @@ def calc_sig3(pairs):
     for contentid, files in pairs:
         filename = files[0]
         try:
-            sig3 = get_image_signature3(filename)
-            sig3 = '%016x' % sig3
-            res[contentid] = sig3
+            sig = get_image_signature3(filename)
+            sig = '%016x' % sig
+            res[contentid] = sig
+        except (IOError, AssertionError, TypeError):
+            res[contentid] = None
+    return res
+
+
+def calc_sig4(pairs):
+    res = {}
+    for contentid, files in pairs:
+        filename = files[0]
+        try:
+            sig = get_image_signature4(filename)
+            sig = '%016x' % sig
+            res[contentid] = sig
         except (IOError, AssertionError, TypeError):
             res[contentid] = None
     return res
 
 
 def execute_job(job):
-    assert job.type in [1, 2, 3]
+    assert job.type in [1, 2, 3, 4]
     if job.type == 1:
         return (1, calc_sig1(job.pairs))
     elif job.type == 2:
         return (2, calc_sig2(job.pairs))
     elif job.type == 3:
         return (3, calc_sig3(job.pairs))
+    elif job.type == 4:
+        return (4, calc_sig4(job.pairs))
 
 
 class Job:
@@ -92,6 +107,7 @@ class ImageIndexer:
             jobs.append(Job(1, todo))
             jobs.append(Job(2, todo))
             jobs.append(Job(3, todo))
+            jobs.append(Job(4, todo))
         return jobs
 
     def execute_jobs(self, jobs):

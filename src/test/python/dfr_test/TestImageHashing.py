@@ -1,6 +1,7 @@
 import unittest
 
-from dfr.image_hashing import get_image_signature1, get_image_signatures2, get_image_signature3, CAUSE_UNEQUAL_LINES
+from dfr.image_hashing import get_image_signature1, get_image_signatures2, \
+    get_image_signature3, get_image_signature4, CAUSE_UNEQUAL_LINES
 
 
 class Test(unittest.TestCase):
@@ -94,6 +95,34 @@ class Test(unittest.TestCase):
         assert_sig3("src/test/images/all_red.png", "ffffffffffffffff")
         assert_sig3("src/test/images/all_white_gray.png", "ffffffffffffffff")
         assert_sig3("src/test/images/all_white_rgb.png", "ffffffffffffffff")
+
+    def test_signature4(self):
+        def assert_sig4(filename, expected):
+            sig = get_image_signature4(filename)
+            self.assertEqual("%016x" % sig, expected)
+        assert_sig4("src/test/images/pattern2.png", "00000000ffffffff")
+        assert_sig4("src/test/images/big/sample_03.jpeg", "000185bdfbc38d8b")
+        assert_sig4("src/test/images/big/globe_west_2048.jpeg", "00387c7c787e3c00")
+        assert_sig4("src/test/images/big/Intercom_PCB_mit_Best.Druck.gif", "007c7c00007c7c60")
+        assert_sig4("src/test/images/pattern1.png", "0f0f0f0ff0f0f0f0")
+        assert_sig4("src/test/images/big/NENG1614.bmp", "38382f1e9cbff4fc")
+        assert_sig4("src/test/images/red_green_blue.png", "3838383838383838")
+        assert_sig4("src/test/images/big/Organigramm_deut_2_Seewiesen-1_png.png", "8727008080e3e7ef")
+        assert_sig4("src/test/images/big/free-your-mind-Seite2.bmp", "97c1b381818d81ff")
+        assert_sig4("src/test/images/big/bird_bird_bird_png_format_by_chimonk-d37tayt.png", "e3446760a8f9f0f2")
+        assert_sig4("src/test/images/big/Nice-Bee.jpeg", "eff8f0c080d7f93c")
+        assert_sig4("src/test/images/white_2_grays_and_black.png", "f0f0f0f0f0f0f0f0")
+        assert_sig4("src/test/images/big/nice-map-big.jpeg", "fef7f7ef0f0f0004")
+        assert_sig4("src/test/images/python-logo-master-v3-TM.png", "ff9f818181ffffff")
+        assert_sig4("src/test/images/big/Sunflower_Metalhead64_edited.png", "ffc783818183c3ff")
+        assert_sig4("src/test/images/pattern3.png", "ffffffff00000000")
+        assert_sig4("src/test/images/all_black_gray.png", "ffffffffffffffff")
+        assert_sig4("src/test/images/all_black_rgb.png", "ffffffffffffffff")
+        assert_sig4("src/test/images/all_blue.png", "ffffffffffffffff")
+        assert_sig4("src/test/images/all_green.png", "ffffffffffffffff")
+        assert_sig4("src/test/images/all_red.png", "ffffffffffffffff")
+        assert_sig4("src/test/images/all_white_gray.png", "ffffffffffffffff")
+        assert_sig4("src/test/images/all_white_rgb.png", "ffffffffffffffff")
 
 if __name__ == '__main__':
     unittest.main()
