@@ -79,16 +79,19 @@ def calc_sig5(pairs):
 
 def execute_job(job):
     assert job.type in [1, 2, 3, 4, 5]
+    start = time.time()
     if job.type == 1:
-        return (1, calc_sig1(job.pairs))
+        sig = calc_sig1(job.pairs)
     elif job.type == 2:
-        return (2, calc_sig2(job.pairs))
+        sig = calc_sig2(job.pairs)
     elif job.type == 3:
-        return (3, calc_sig3(job.pairs))
+        sig = calc_sig3(job.pairs)
     elif job.type == 4:
-        return (4, calc_sig4(job.pairs))
+        sig = calc_sig4(job.pairs)
     elif job.type == 5:
-        return (5, calc_sig5(job.pairs))
+        sig = calc_sig5(job.pairs)
+    used = time.time()-start
+    return (job.type, sig, used)
 
 
 class Job:
@@ -113,6 +116,7 @@ class ImageIndexer:
             self.pool = None
         self.parallel_threads = parallel_threads
         self.next_commit = None
+        self.time_per_type = None
 
     def create_jobs(self, ids):
         jobs = []
@@ -131,10 +135,12 @@ class ImageIndexer:
             result = self.pool.map(execute_job, jobs)
         else:
             result = [execute_job(x) for x in jobs]
+        for type, _, time_used in result:
+            self.time_per_type[type] += time_used
         return result
 
     def save_results(self, all_results):
-        for type, results in all_results:
+        for type, results, _ in all_results:
             for contentid in results:
                 sig = results[contentid]
                 self.db.imagehash.save(ImageHash(contentid, type, sig))
@@ -153,6 +159,7 @@ class ImageIndexer:
         self.next_commit = current_time + self.commit_every
         self.num_todo = len(ids_to_index)
         self.done = 0
+        self.time_per_type = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
         for chunk in chunker(ids_to_index, CHUNK_SIZE * self.parallel_threads):
             current_time = time.time()
             if current_time > self.next_commit:
@@ -167,6 +174,12 @@ class ImageIndexer:
             self.done += len(chunk)
         self.db.commit()
         self.progress("\n")
+        self.report_time_used_per_type()
+
+    def report_time_used_per_type(self):
+        for i in [1, 2, 3, 4, 5]:
+            time_used = format_time_delta(self.time_per_type[i])
+            self.progress("  hash type %d used %s\n" % (i, time_used))
 
     def print_progress(self):
         used = time.time() - self.start
