@@ -2,17 +2,42 @@
 import sys
 
 from dfr.bit_equal_finder import BaseFinder
+from dfr.model import ImageFeedback
 
 
 class ImageSimiliarFilePair:
     # pylint: disable=R0913
     def __init__(self, similarity, path1, path2,
-                 ctxt_index, ctxt_size):
+                 ctxt_index, ctxt_size, db,
+                 content_id1, content_id2):
         self.similarity = similarity
         self.path1 = path1
         self.path2 = path2
         self.ctxt_index = ctxt_index
         self.ctxt_size = ctxt_size
+        self.db = db
+        self.content_id1 = content_id1
+        self.content_id2 = content_id2
+
+    def get_feedback(self):
+        known = self.db.imagefeedback.find(contentid1=self.content_id1,
+                                           contentid2=self.content_id2)
+        if known:
+            return known[0].aresimilar
+        else:
+            return None
+
+    def save_feedback(self, are_similar):
+        obj = ImageFeedback(self.content_id1, self.content_id2, are_similar)
+        self.db.imagefeedback.save(obj, "INSERT OR REPLACE")
+        self.db.commit()
+
+    def clear_feedback(self):
+        known = self.db.imagefeedback.find(contentid1=self.content_id1,
+                                           contentid2=self.content_id2)
+        if known:
+            self.db.imagefeedback.delete(known[0])
+            self.db.commit()
 
 
 def prepare_sig1(hash):
@@ -114,10 +139,13 @@ class ImageSimilarFinder(BaseFinder):
 
         for index in range(len(res)):
             similarity, index1, index2 = res[index]
-            file1 = contents[index1].files[0].path
-            file2 = contents[index2].files[0].path
+            content1 = contents[index1]
+            content2 = contents[index2]
+            file1 = content1.files[0].path
+            file2 = content2.files[0].path
             yield ImageSimiliarFilePair(similarity, file1, file2,
-                                        index, len(res))
+                                        index, len(res), self.db,
+                                        content1.id, content2.id)
 
     def progress(self, msg, level=1):
         if level <= self.verbose_progress:

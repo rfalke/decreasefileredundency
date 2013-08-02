@@ -234,12 +234,13 @@ class GuiImageSimilarResolver:
         self.root.bind('s', self.are_similar)
         self.root.bind('d', self.are_not_similar)
         self.root.bind('n', self.are_not_similar)
+        self.root.bind('c', self.clear_feedback)
         self.root.bind('q', self.quit)
         self.root.bind('<Left>', self.goto_prev)
         self.root.bind('<Right>', self.goto_next)
         screen_size = get_screen_size(self.root)
         self.max_image_size = (int(0.4*screen_size[0]),
-                               int(0.8*screen_size[1]))
+                               int(0.75*screen_size[1]))
         self.pairs = []
         self.item_frame = Frame(self.root)
         self.background = self.item_frame.cget("background")
@@ -269,8 +270,12 @@ class GuiImageSimilarResolver:
     def are_not_similar(self, *_):
         self.save_feedback(0)
 
-    def save_feedback(self, _):
-        # todo _ is are_similar
+    def clear_feedback(self, *_):
+        self.pairs[self.index].clear_feedback()
+        self.change_index(1)
+
+    def save_feedback(self, are_similar):
+        self.pairs[self.index].save_feedback(are_similar)
         self.change_index(1)
 
     def change_index(self, change):
@@ -288,9 +293,13 @@ class GuiImageSimilarResolver:
         self.pairs.append(pair)
 
     def finished(self):
-        self.index = 0
-        self.update_labels()
-        mainloop()
+        if self.pairs:
+            self.index = 0
+            self.update_labels()
+            mainloop()
+        else:
+            print ("No duplicated images found. Maybe f_image.py was not run" +
+                   " yet? Or there are no images in the path given.")
 
     def create_gui(self):
         root = self.item_frame
@@ -344,12 +353,28 @@ class GuiImageSimilarResolver:
 
     def update_labels(self):
         pair = self.pairs[self.index]
-        img1 = ImageRelated(pair.path1, self.max_image_size, self.background)
-        img2 = ImageRelated(pair.path2, self.max_image_size, self.background)
+        feedback = pair.get_feedback()
+        if feedback is None:
+            feedback = "not yet"
+            background = self.background
+        elif feedback == 0:
+            feedback = "not similar"
+            background = "#FFE0E0"
+        elif feedback == 1:
+            feedback = "similar"
+            background = "#E0FFE0"
+        else:
+            assert 0
+
+        img1 = ImageRelated(pair.path1, self.max_image_size, background)
+        img2 = ImageRelated(pair.path2, self.max_image_size, background)
         self.ref_counting = (img1, img2)
 
-        self.label_sim.config(text="%d/%d similarity=%f" % (
-            self.index+1, len(self.pairs), self.pairs[self.index].similarity))
+        self.item_frame.config(background=background)
+        text = "%d/%d similarity=%f feedback = %s" % (
+            self.index+1, len(self.pairs),
+            self.pairs[self.index].similarity, feedback)
+        self.label_sim.config(background=background, text=text)
 
         self.label_imgl.config(text=None, image=img1.tk_image)
         self.label_imgr.config(text=None, image=img2.tk_image)

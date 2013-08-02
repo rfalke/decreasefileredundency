@@ -85,16 +85,16 @@ class Repo:
                              (sql, parameter))
             raise
 
-    def save(self, obj):
+    def save(self, obj, insert_stmt="INSERT"):
         assert isinstance(obj, self.clazz)
         cols = ",".join(self.attrs)
         values = [getattr(obj, x) for x in self.attrs]
 
         if obj.id is None:
             qmarks = ",".join(["?" for x in self.attrs])
-            cursor = self._execute(
-                'INSERT INTO %s (id,%s) VALUES (NULL, %s)' % (
-                self.table, cols, qmarks), values)
+            sql = insert_stmt + ' INTO %s (id,%s) VALUES (NULL, %s)' % (
+                self.table, cols, qmarks)
+            cursor = self._execute(sql, values)
             id = cursor.lastrowid
             assert id
             obj.id = id
