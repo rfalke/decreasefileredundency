@@ -51,7 +51,6 @@ def compare_sig1(hash1, hash2):
     for i in range(len(hash1)):
         error += abs(hash1[i] - hash2[i])
     similarity = 1-error / float(2**17)
-    assert 0 <= similarity <= 1, similarity
     return similarity
 
 
@@ -101,7 +100,6 @@ class ImageSimilarFinder(BaseFinder):
 
     def _find_contents(self):
         contents = self.db.content.find(isimage=1)
-        print "looking for files ..."
         for content in contents:
             content.files = []
             hashs = self.db.imagehash.find(contentid=content.id, iht=self.iht)
@@ -111,7 +109,6 @@ class ImageSimilarFinder(BaseFinder):
                     content.prepared_hash = self.prepare(hashs[0].hash)
                     content.files = self._find_files_for_content_id(content.id)
         contents = [x for x in contents if x.files]
-        print ".. done"
         return contents
 
     def find(self, min_similarity):

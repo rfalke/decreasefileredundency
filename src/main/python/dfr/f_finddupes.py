@@ -238,6 +238,7 @@ class GuiImageSimilarResolver:
         self.root.bind('q', self.quit)
         self.root.bind('<Left>', self.goto_prev)
         self.root.bind('<Right>', self.goto_next)
+        self.root.bind('f', self.toggle_skip)
         screen_size = get_screen_size(self.root)
         self.max_image_size = (int(0.4*screen_size[0]),
                                int(0.75*screen_size[1]))
@@ -246,6 +247,7 @@ class GuiImageSimilarResolver:
         self.background = self.item_frame.cget("background")
         self.item_frame.pack(expand=False, side=TOP)
 
+        self.skip_pairs_with_feedback = 1
         self.ref_counting = None
         self.label_sim = None
         self.label_bppl = self.label_bppr = None
@@ -257,6 +259,9 @@ class GuiImageSimilarResolver:
         self.create_gui()
 
         self.index = None
+
+    def toggle_skip(self, *_):
+        self.skip_pairs_with_feedback = not self.skip_pairs_with_feedback
 
     def goto_prev(self, *_):
         self.change_index(-1)
@@ -279,11 +284,21 @@ class GuiImageSimilarResolver:
         self.change_index(1)
 
     def change_index(self, change):
-        self.index += change
-        if self.index < 0:
-            self.index = 0
-        if self.index >= len(self.pairs):
-            self.index = len(self.pairs)-1
+        last_index = self.index
+        while 1:
+            self.index += change
+            if self.index < 0:
+                self.index = 0
+            if self.index >= len(self.pairs):
+                self.index = len(self.pairs)-1
+            if self.index == last_index:
+                break
+            if not self.skip_pairs_with_feedback:
+                break
+            if not self.has_feedback():
+                break
+            last_index = self.index
+
         self.update_labels()
 
     def quit(self, _):
@@ -351,6 +366,11 @@ class GuiImageSimilarResolver:
         Button(root, text="Do not match (images are NOT similar)", underline=0,
                command=self.are_not_similar).grid(row=row, column=1)
 
+    def has_feedback(self):
+        pair = self.pairs[self.index]
+        feedback = pair.get_feedback()
+        return feedback is not None
+
     def update_labels(self):
         pair = self.pairs[self.index]
         feedback = pair.get_feedback()
@@ -371,9 +391,10 @@ class GuiImageSimilarResolver:
         self.ref_counting = (img1, img2)
 
         self.item_frame.config(background=background)
-        text = "%d/%d similarity=%f feedback = %s" % (
+        text = "%d/%d similarity=%f feedback = %s skip=%d" % (
             self.index+1, len(self.pairs),
-            self.pairs[self.index].similarity, feedback)
+            self.pairs[self.index].similarity, feedback,
+            self.skip_pairs_with_feedback)
         self.label_sim.config(background=background, text=text)
 
         self.label_imgl.config(text=None, image=img1.tk_image)
