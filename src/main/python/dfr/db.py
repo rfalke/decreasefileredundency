@@ -85,15 +85,15 @@ class Repo:
                              (sql, parameter))
             raise
 
-    def save(self, obj, insert_stmt="INSERT"):
+    def save(self, obj, insert_stmt="INSERT", id_value="NULL"):
         assert isinstance(obj, self.clazz)
         cols = ",".join(self.attrs)
         values = [getattr(obj, x) for x in self.attrs]
 
         if obj.id is None:
             qmarks = ",".join(["?" for x in self.attrs])
-            sql = insert_stmt + ' INTO %s (id,%s) VALUES (NULL, %s)' % (
-                self.table, cols, qmarks)
+            sql = insert_stmt + ' INTO %s (id,%s) VALUES (%s, %s)' % (
+                self.table, cols, id_value, qmarks)
             cursor = self._execute(sql, values)
             id = cursor.lastrowid
             assert id
@@ -244,15 +244,21 @@ class ImageHashRepo(Repo):
 class ImageCmpRepo(Repo):
     def __init__(self, conn):
         Repo.__init__(self, conn, "imagecmp", ImageCmp,
-                      ["contentid1", "contentid2", "iht", "similarity"])
+                      ["contentid1_first", "contentid1_last",
+                       "contentid2_first", "contentid2_last",
+                       "iht", "similarity_threshold", "pairs"])
 
     def build_where(self, query, builder):
         Repo.build_where(self, query, builder)
         assert len(query) == 0, query
 
     def construct(self, values):
-        id, contentid1, contentid2, iht, similarity = values
-        return ImageCmp(contentid1, contentid2, iht, similarity, id=id)
+        id, contentid1_first, contentid1_last, \
+            contentid2_first, contentid2_last, \
+            iht, similarity_threshold, pairs = values
+        return ImageCmp(contentid1_first, contentid1_last,
+                        contentid2_first, contentid2_last,
+                        iht, similarity_threshold, pairs, id=id)
 
 
 class ImageFeedbackRepo(Repo):
@@ -321,11 +327,14 @@ CREATE TABLE imagehash (
             self.conn.execute('''
 CREATE TABLE imagecmp (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  contentid1 INTEGER NON NULL,
-  contentid2 INTEGER NON NULL,
+  contentid1_first INTEGER NON NULL,
+  contentid1_last INTEGER NON NULL,
+  contentid2_first INTEGER NON NULL,
+  contentid2_last INTEGER NON NULL,
   iht INTEGER NOT NULL,
-  similarity REAL NOT NULL,
-  UNIQUE (contentid1, contentid2, iht)
+  similarity_threshold REAL NOT NULL,
+  pairs TEXT NOT NULL,
+  UNIQUE (iht, contentid1_first, contentid2_first)
 )''')
             self.conn.execute('''
 CREATE TABLE imagefeedback (

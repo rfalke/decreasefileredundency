@@ -212,14 +212,14 @@ class Test(TestCase):
             db_fn = os.path.join(tmpdir.name, 'files.sdb')
             repo = Database(db_fn, verbose=0).imagecmp
 
-            obj1 = ImageCmp(3, 4, 5, 0.12)
-            self.assertEqual(obj1, ImageCmp(3, 4, 5, 0.12))
+            obj1 = ImageCmp(1000, 1999, 3000, 3999, 3, 0.12, "123,456.0|71,123.12")
+            self.assertEqual(obj1, ImageCmp(1000, 1999, 3000, 3999, 3, 0.12, "123,456|71,123"))
             repo.save(obj1)
             self.assertEqual(obj1.id, 1)
-            self.assertEqual(obj1, ImageCmp(3, 4, 5, 0.12, id=1))
+            self.assertEqual(obj1, ImageCmp(1000, 1999, 3000, 3999, 3, 0.12, "123,456|71,123", id=1))
             self.assertEqual(repo.load(1), obj1)
 
-            obj2 = ImageCmp(6, 7, 8, 0.51)
+            obj2 = ImageCmp(4000, 4999, 7000, 7999, 1, 0.51, "123,456|71,123")
             repo.save(obj2)
             self.assertEqual(obj2.id, 2)
 

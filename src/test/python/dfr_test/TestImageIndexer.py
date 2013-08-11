@@ -19,7 +19,7 @@ class Test(TestCase):
             indexer = BitIndexer(the_db, DO_NOT_MATCH_RE, DO_NOT_MATCH_RE, verbose_progress=0)
             indexer.run(["src/test/images/big"])
 
-            indexer = ImageIndexer(the_db, verbose_progress=0)
+            indexer = ImageIndexer(the_db, [1, 2, 3, 4, 5], verbose_progress=0)
             indexer.run()
 
             self.verify_db_rows_for_big_images(db_fn)
@@ -31,7 +31,8 @@ class Test(TestCase):
             indexer = BitIndexer(the_db, DO_NOT_MATCH_RE, DO_NOT_MATCH_RE, verbose_progress=0)
             indexer.run(["src/test/images/big"])
 
-            indexer = ImageIndexer(the_db, verbose_progress=0, commit_every=0.01, parallel_threads=4)
+            indexer = ImageIndexer(the_db, [1, 2, 3, 4, 5],
+                                   verbose_progress=0, commit_every=0.01, parallel_threads=4)
             indexer.run()
 
             self.verify_db_rows_for_big_images(db_fn)
@@ -41,7 +42,7 @@ class Test(TestCase):
             db_fn = join(tmpdir.name, 'files.sdb')
             the_db = db.Database(db_fn, verbose=0)
 
-            indexer = ImageIndexer(the_db, verbose_progress=0)
+            indexer = ImageIndexer(the_db, [1], verbose_progress=0)
             indexer.run()
 
             self.assertTrue(len(the_db.content.find()) == 0)
@@ -76,7 +77,7 @@ class Test(TestCase):
             indexer.run([datadir])
 
             with NoStderr():
-                indexer = ImageIndexer(the_db, verbose_progress=5, commit_every=0.01)
+                indexer = ImageIndexer(the_db, [1], verbose_progress=5, commit_every=0.01)
                 indexer.run()
 
             self.assertTrue(True)

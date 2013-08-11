@@ -176,7 +176,7 @@ class ImageRelated:
             new_size = (int(size[0]*factor), int(size[1]*factor))
             img = img.resize(new_size)
 
-        new = Image.new(img.mode, self.max_image_size, background)
+        new = Image.new("RGB", self.max_image_size, background)
         width, height = img.size
         new.paste(img, (0, 0, width, height))
         assert new.size == self.max_image_size

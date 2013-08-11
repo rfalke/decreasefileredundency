@@ -7,6 +7,7 @@ import multiprocessing
 from dfr.image_hashing import get_image_signature1, get_image_signatures2, \
     get_image_signature3, get_image_signature4, get_image_signature5
 from dfr.model import ImageHash
+from dfr.progress import Progress
 from dfr.support import chunker, format_time_delta
 
 
@@ -101,15 +102,14 @@ class Job:
 
 
 class ImageIndexer:
-    def __init__(self, db, verbose_progress=2, commit_every=12,
-                 parallel_threads=1):
+    # pylint: disable=R0913
+    def __init__(self, db, signature_types, verbose_progress=2,
+                 commit_every=12, parallel_threads=1):
         assert parallel_threads >= 1
         self.db = db
+        self.signature_types = signature_types
         self.verbose_progress = verbose_progress
         self.commit_every = commit_every
-        self.num_todo = None
-        self.done = None
-        self.start = None
         if parallel_threads > 1:
             self.pool = multiprocessing.Pool(processes=parallel_threads)
         else:
@@ -123,11 +123,8 @@ class ImageIndexer:
         for chunk in chunker(ids, CHUNK_SIZE):
             todo = [(x, self.find_files_for_content(x)) for x in chunk]
             todo = [(id, files) for id, files in todo if files]
-            jobs.append(Job(1, todo))
-            jobs.append(Job(2, todo))
-            jobs.append(Job(3, todo))
-            jobs.append(Job(4, todo))
-            jobs.append(Job(5, todo))
+            for i in self.signature_types:
+                jobs.append(Job(i, todo))
         return jobs
 
     def execute_jobs(self, jobs):
@@ -154,46 +151,30 @@ class ImageIndexer:
         if not ids_to_index:
             self.progress("INFO: Have calculated all image signatures.\n")
             return
+        prog = Progress(len(ids_to_index), "Calculate image signatures",
+                        do_output=self.verbose_progress > 0)
         current_time = time.time()
-        self.start = current_time
         self.next_commit = current_time + self.commit_every
-        self.num_todo = len(ids_to_index)
-        self.done = 0
         self.time_per_type = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
         for chunk in chunker(ids_to_index, CHUNK_SIZE * self.parallel_threads):
             current_time = time.time()
             if current_time > self.next_commit:
                 self.next_commit = current_time + self.commit_every
                 self.db.commit()
-            self.print_progress()
 
             jobs = self.create_jobs(chunk)
             result = self.execute_jobs(jobs)
             self.save_results(result)
 
-            self.done += len(chunk)
+            prog.work(len(chunk))
+        prog.finish()
         self.db.commit()
-        self.progress("\n")
         self.report_time_used_per_type()
 
     def report_time_used_per_type(self):
         for i in [1, 2, 3, 4, 5]:
             time_used = format_time_delta(self.time_per_type[i])
             self.progress("  hash type %d used %s\n" % (i, time_used))
-
-    def print_progress(self):
-        used = time.time() - self.start
-        percent_done = float(self.done)/self.num_todo
-        if percent_done:
-            total = used / percent_done
-        else:
-            total = 0
-        remain = total * (1-percent_done)
-        speed = self.done/(used/60)
-        self.progress("%s\r" % (" "*40))
-        self.progress("Processed %d/%d in %s [ %d/minute ] [ ETA %s ]\r" % (
-            self.done, self.num_todo,
-            format_time_delta(used), speed, format_time_delta(remain)))
 
     def prepare(self, files):
         for file in files:
