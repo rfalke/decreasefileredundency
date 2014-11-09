@@ -6,7 +6,7 @@ from dfr.model import ImageFeedback
 from dfr.progress import Progress
 
 
-class ImageSimiliarFilePair:
+class ImageSimiliarFilePair(object):
     # pylint: disable=R0913
     def __init__(self, similarity, path1, path2,
                  ctxt_index, ctxt_size, db,

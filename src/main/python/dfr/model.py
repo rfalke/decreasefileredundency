@@ -2,7 +2,7 @@
 TILE_CHUNK_SIZE = 1000
 
 
-class Dir:
+class Dir(object):
     def __init__(self, name, id=None):
         self.id = id
         self.name = name
@@ -12,7 +12,7 @@ class Dir:
                 and self.name == other.name)
 
 
-class File:
+class File(object):
     # pylint: disable=R0913
     def __init__(self, dirid, name, mtime, contentid, id=None):
         self.id = id
@@ -29,7 +29,7 @@ class File:
                 and self.contentid == other.contentid)
 
 
-class Content:
+class Content(object):
     # pylint: disable=R0913
     def __init__(self, size, fullsha1, first1ksha1, partsha1s,
                  isimage, id=None):
@@ -55,7 +55,7 @@ class Content:
                 and self.isimage == other.isimage)
 
 
-class ImageHash:
+class ImageHash(object):
     def __init__(self, contentid, iht, hash, id=None):
         self.id = id
         self.contentid = contentid
@@ -103,7 +103,7 @@ def decode_pairs(input, first1, first2):
         return []
 
 
-class ImageCmp:
+class ImageCmp(object):
     # pylint: disable=R0913
     def __init__(self,
                  contentid1_first, contentid1_last,
@@ -129,7 +129,7 @@ class ImageCmp:
                 and self.iht == other.iht)
 
 
-class ImageFeedback:
+class ImageFeedback(object):
     def __init__(self, contentid1, contentid2, aresimilar, id=None):
         self.id = id
         self.contentid1 = contentid1
@@ -143,7 +143,7 @@ class ImageFeedback:
                 and self.aresimilar == other.aresimilar)
 
 
-class Tile:
+class Tile(object):
     def __init__(self, first1, last1, first2, last2):
         assert first1 <= first2
         self.first1 = first1

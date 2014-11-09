@@ -61,7 +61,7 @@ def get_tiles(contents):
     return res
 
 
-class ImageComperator():
+class ImageComperator(object):
     def __init__(self, db, sig_type, verbose_progress=1):
         self.db = db
         self.verbose_progress = verbose_progress
@@ -92,7 +92,7 @@ class ImageComperator():
                 assert len(hashs) == 1
                 if hashs[0].hash:
                     content.prepared_hash = self.prepare(hashs[0].hash)
-        contents = [x for x in contents if (x.prepared_hash is not None)]
+        contents = [x for x in contents if x.prepared_hash is not None]
         return contents
 
     def get_open_tiles(self, contents, min_similarity):

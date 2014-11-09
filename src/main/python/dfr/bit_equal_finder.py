@@ -12,7 +12,7 @@ def compare_files(file1, file2):
     return diff
 
 
-class BitEqualFilePair:
+class BitEqualFilePair(object):
     # pylint: disable=R0913
     def __init__(self, size, hardlinked, path1, path2,
                  ctxt_index, ctxt_size, ctxt_subindex):
@@ -25,7 +25,7 @@ class BitEqualFilePair:
         self.ctxt_subindex = ctxt_subindex
 
 
-class BaseFinder:
+class BaseFinder(object):
     def __init__(self, db, roots):
         self.db = db
         self.roots = [abspath(x) for x in roots]

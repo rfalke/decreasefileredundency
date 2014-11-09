@@ -15,7 +15,7 @@ from dfr.image_similar_finder import ImageSimilarFinder
 from dfr.support import format_bytes, add_common_command_line_arguments
 
 
-class InteractiveResolver:
+class InteractiveResolver(object):
     def __init__(self, dry_run):
         self.dry_run = dry_run
 
@@ -28,7 +28,7 @@ class InteractiveResolver:
                 os.remove(path)
 
 
-class CsvBitEqualResolver:
+class CsvBitEqualResolver(object):
     def __init__(self):
         print "size;hardlinked;path1;path2"
 
@@ -114,7 +114,7 @@ class InteractiveBitEqualResolver(InteractiveResolver):
         pass
 
 
-class CsvBitTruncatedResolver:
+class CsvBitTruncatedResolver(object):
     def __init__(self):
         print "largesize;largepath;smallsize;smallpath"
 
@@ -155,7 +155,7 @@ class InteractiveBitTruncatedResolver(InteractiveResolver):
         pass
 
 
-class ImageRelated:
+class ImageRelated(object):
     def __init__(self, path, max_image_size, background):
         self.path = path
         self.max_image_size = max_image_size
@@ -212,7 +212,7 @@ def get_screen_size(root):
     return (root.winfo_screenwidth(), root.winfo_screenheight())
 
 
-class CsvImageSimilarResolver:
+class CsvImageSimilarResolver(object):
     def __init__(self):
         print "similarity;path1;path2"
 
@@ -227,7 +227,7 @@ class CsvImageSimilarResolver:
         pass
 
 
-class GuiImageSimilarResolver:
+class GuiImageSimilarResolver(object):
     def __init__(self, dry_run):
         self.dry_run = dry_run
         self.root = Tk()

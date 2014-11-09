@@ -18,19 +18,19 @@ def makedirs(dirname):
         assert os.path.isdir(dirname)
 
 
-class Null:
+class Null(object):
     def __init__(self):
         pass
 
 
-class In:
+class In(object):
     def __init__(self, values):
         assert (isinstance(values, (list, tuple)) and
                 not isinstance(values, basestring))
         self.values = values
 
 
-class SelectBuilder:
+class SelectBuilder(object):
     def __init__(self, table, columns):
         self.table = table
         self.columns = columns
@@ -68,7 +68,7 @@ class SelectBuilder:
         return res
 
 
-class Repo:
+class Repo(object):
     def __init__(self, conn, table, clazz, attrs):
         self.conn = conn
         self.table = table
@@ -275,7 +275,7 @@ class ImageFeedbackRepo(Repo):
         return ImageFeedback(contentid1, contentid2, aresimilar, id=id)
 
 
-class Database:
+class Database(object):
     def __init__(self, db_file="files.db", verbose=1):
         do_init = not os.path.exists(db_file)
         makedirs(os.path.dirname(db_file))

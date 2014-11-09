@@ -67,7 +67,7 @@ class Devnull(object):
         pass
 
 
-class NoStderr:
+class NoStderr(object):
     def __init__(self):
         self._written = None
         self.savestderr = None

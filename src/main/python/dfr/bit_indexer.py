@@ -31,7 +31,7 @@ def remove_excluded_names(names, exclude_comp_re):
     return removed
 
 
-class BitIndexer:
+class BitIndexer(object):
     # pylint: disable=R0913
     def __init__(self, db, file_excludes_as_re, dir_excludes_as_re,
                  verbose_progress=3, commit_every=12, full_stats_every=30,

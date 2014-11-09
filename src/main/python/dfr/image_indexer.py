@@ -95,13 +95,13 @@ def execute_job(job):
     return (job.type, sig, used)
 
 
-class Job:
+class Job(object):
     def __init__(self, type, pairs):
         self.type = type
         self.pairs = pairs
 
 
-class ImageIndexer:
+class ImageIndexer(object):
     # pylint: disable=R0913
     def __init__(self, db, signature_types, verbose_progress=2,
                  commit_every=12, parallel_threads=1):

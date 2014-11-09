@@ -14,7 +14,7 @@ def format_number(number):
     return res
 
 
-class Progress:
+class Progress(object):
     def __init__(self, todo, msg, msg_len=None, do_output=1):
         self.do_output = do_output
         self.update_every = 0.5

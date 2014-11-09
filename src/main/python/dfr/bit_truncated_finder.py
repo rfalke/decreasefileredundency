@@ -32,14 +32,14 @@ def small_is_truncated_of_large(large, small):
     return True
 
 
-class Context:
+class Context(object):
     def __init__(self, index, size, subindex):
         self.index = index
         self.size = size
         self.subindex = subindex
 
 
-class TruncatedFile:
+class TruncatedFile(object):
     # pylint: disable=R0913
     def __init__(self, large_size, large_path, small_size, small_path,
                  ctxt_index, ctxt_size, ctxt_subindex):
