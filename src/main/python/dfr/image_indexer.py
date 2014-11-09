@@ -47,7 +47,7 @@ def calc_sig3(pairs):
             sig = get_image_signature3(filename)
             sig = '%016x' % sig
             res[contentid] = sig
-        except (IOError, AssertionError, TypeError):
+        except (IOError, AssertionError, TypeError, IndexError):
             res[contentid] = None
     return res
 
