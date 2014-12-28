@@ -1,12 +1,28 @@
 COVERAGE=coverage-2.7
 
-tests: pep8 pylint python_tests shell_tests
+tests: compile_c pep8 pylint python_tests shell_tests
+
+compile_c: target/calc_hamming_distance target/calc_histogram_distance
+
+target/calc_hamming_distance: Makefile src/main/c/calc_hamming_distance.c
+	mkdir -p target
+	gcc -g -std=c99 -march=amdfam10 -O2 -Wall -Werror src/main/c/calc_hamming_distance.c -o target/calc_hamming_distance
+	objdump -d target/calc_hamming_distance >target/calc_hamming_distance.s
+
+target/calc_histogram_distance: Makefile src/main/c/calc_histogram_distance.c
+	mkdir -p target
+	gcc -g -std=c99 -march=amdfam10 -O2 -Wall -Werror src/main/c/calc_histogram_distance.c -o target/calc_histogram_distance
+	objdump -d target/calc_histogram_distance >target/calc_histogram_distance.s
+
+indent_c:
+	indent -linux src/main/c/calc_hamming_distance.c
+	indent -linux src/main/c/calc_histogram_distance.c
 
 python_tests:
 	$(COVERAGE) erase
 	for i in src/test/python/dfr_test/Test*.py; do echo "=== Running $$i"; \
 	PYTHONPATH=src/main/python:src/test/python:deps/python \
-	$(COVERAGE) run -a "$$i"; done
+	$(COVERAGE) run -a "$$i" || exit 1; done
 	$(COVERAGE) report -m '--include=*/dfr/*' --fail-under=100
 
 pylint:
@@ -23,4 +39,7 @@ profile:
 
 shell_tests:
 	./src/test/shell/run.sh
+	./src/test/shell/verify_hamming.sh
+	./src/test/shell/verify_histogram.sh
 	./src/test/shell/verify_sig2.sh
+	./src/test/shell/test_image_signatures.sh

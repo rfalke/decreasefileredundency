@@ -20,7 +20,7 @@ def calc_sig1(pairs):
         filename = files[0]
         try:
             sig = get_image_signature1(filename)
-            sig = ["%x" % (2**16*x) for x in sig]
+            sig = ["%x" % ((2**16-1)*x) for x in sig]
             sig = " ".join(sig)
             res[contentid] = sig
         except (IOError, AssertionError, TypeError):
@@ -143,10 +143,15 @@ class ImageIndexer(object):
                 self.db.imagehash.save(ImageHash(contentid, type, sig))
 
     def run(self):
+        prog = Progress(1, "Determine images without hashes",
+                        do_output=self.verbose_progress > 0)
+
         indexed_ids = set([x.contentid for x in self.db.imagehash.find()])
         tmp = set(self.db.content.find_ids(isimage=1,
                                            sort="first1ksha1 ASC"))
         ids_to_index = list(tmp - indexed_ids)
+        prog.work()
+        prog.finish()
 
         if not ids_to_index:
             self.progress("INFO: Have calculated all image signatures.\n")

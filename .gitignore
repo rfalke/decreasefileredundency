@@ -1,2 +1,8 @@
 *.pyc
 *~
+decreasefileredundency.iml
+decreasefileredundency.ipr
+decreasefileredundency.iws
+src/test/lots_of_images
+target/
+.coverage

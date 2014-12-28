@@ -47,8 +47,6 @@ class ImageSimilarFinder(BaseFinder):
         self.verbose_progress = verbose_progress
         assert sig_type in [1, 2, 3, 4, 5]
         self.iht = sig_type
-        self.done = None
-        self.num_todo = None
 
     def _find_contents(self):
         contents = self.db.content.find(isimage=1)
@@ -60,37 +58,25 @@ class ImageSimilarFinder(BaseFinder):
         prog.finish()
         return contents
 
-    def load_known(self, min_similarity, content_ids):
-        tiles = self.db.imagecmp.find(iht=self.iht)
-        res = []
-        for tile in tiles:
-            assert tile.similarity_threshold <= min_similarity
-            for id1, id2, sim in tile.get_decoded_pairs():
-                if id1 in content_ids and \
-                   id2 in content_ids and \
-                   sim >= min_similarity:
-                    res.append((sim, id1, id2))
-        res.sort(reverse=True)
-        return res
-
     def find(self, min_similarity):
         contents = self._find_contents()
         contents.sort(lambda x, y: cmp(x.id, y.id))
         content_by_id = {}
         for i in contents:
             content_by_id[i.id] = i
-
-        res = self.load_known(min_similarity, set(content_by_id.keys()))
-
+        res = self.db.imagecmp.find(iht=self.iht, sort="score DESC")
         for index in range(len(res)):
-            similarity, id1, id2 = res[index]
-            content1 = content_by_id[id1]
-            content2 = content_by_id[id2]
+            obj = res[index]
+            content1 = content_by_id[obj.contentid]
             file1 = content1.files[0].path
-            file2 = content2.files[0].path
-            yield ImageSimiliarFilePair(similarity, file1, file2,
-                                        index, len(res), self.db,
-                                        content1.id, content2.id)
+            pairs = obj.get_pairs()
+            for contentid2, similarity in pairs:
+                content2 = content_by_id[contentid2]
+                file2 = content2.files[0].path
+                if similarity >= min_similarity:
+                    yield ImageSimiliarFilePair(similarity, file1, file2,
+                                                index, len(res), self.db,
+                                                content1.id, content2.id)
 
     def progress(self, msg, level=1):
         if level <= self.verbose_progress:

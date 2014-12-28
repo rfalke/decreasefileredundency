@@ -75,7 +75,7 @@ def get_image_signatures2(filenames):
                     if hash == "FAILED":
                         hashs.append(None)
                     else:
-                        assert len(hash) == 64
+                        assert len(hash) == 16
                         hashs.append(hash)
             if len(hashs) != len(filenames) or CAUSE_UNEQUAL_LINES:
                 raise KeyboardInterrupt()

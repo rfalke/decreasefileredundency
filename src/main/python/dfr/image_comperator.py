@@ -1,90 +1,108 @@
-
 import sys
-from dfr.model import ImageCmp, Tile, TILE_CHUNK_SIZE
+import subprocess
+import os
+
+from dfr.model import ImageCmp
 from dfr.progress import Progress
+import dfr.model
 
 
 def prepare_sig1(hash):
     return [int(x, 16) for x in hash.split(" ")]
 
 
-def compare_sig1(hash1, hash2):
-    if len(hash1) != len(hash2):
-        return 0
-    error = 0
-    for i in range(len(hash1)):
-        error += abs(hash1[i] - hash2[i])
-    similarity = 1-error / float(2**17)
-    return similarity
-
-
 def prepare_hex_sig(hash):
     return int(hash, 16)
 
 
-def compare_sig_by_comparing_256_bits(hash1, hash2):
-    xor = hash1 ^ hash2
-    distance = bin(xor).count("1")
-    similarity = 1-distance/256.0
-    assert 0 <= similarity <= 1, similarity
-    return similarity
-
-
-def compare_sig_by_comparing_64_bits(hash1, hash2):
-    xor = hash1 ^ hash2
-    distance = bin(xor).count("1")
-    similarity = 1-distance/64.0
-    assert 0 <= similarity <= 1, similarity
-    return similarity
-
-
-def get_tiles(contents):
-    last_id = 0
-    if contents:
-        last_id = contents[-1].id
-    first_ids = range(0, last_id, TILE_CHUNK_SIZE)
-    res = []
-
-    def get_last(first, index):
-        if index == len(first_ids)-1:
-            return last_id
+def write_image_hash_data_file(contents, contents_by_id, min_similarity):
+    max_dist = int(64 * (1 - min_similarity))
+    filename = "images.data"
+    file = open(filename, "w")
+    last_id = contents[-1].id
+    to_output = min(10000, (last_id + 1))
+    factors = [str(int(10 * ((13.0 - x) / 2 + 1.5))) for x in range(16)]
+    file.write("%d %d %d %s\n" % ((last_id + 1), max_dist, to_output,
+                                  " ".join(factors)))
+    for id in range(last_id + 1):
+        content = contents_by_id.get(id, None)
+        if content is not None:
+            file.write("%016x\n" % content.prepared_hash)
         else:
-            return first+TILE_CHUNK_SIZE-1
+            file.write("na\n")
+    file.close()
+    # print "content hash = " + open(filename).read()
+    return filename
 
-    for index1 in range(len(first_ids)):
-        first1 = first_ids[index1]
-        last1 = get_last(first1, index1)
-        for index2 in range(index1, len(first_ids)):
-            first2 = first_ids[index2]
-            last2 = get_last(first2, index2)
-            res.append(Tile(first1, last1, first2, last2))
-    return res
+
+def write_image_histo_data_file(contents, contents_by_id, min_similarity):
+    def inner(filename, hash_length):
+        assert hash_length in [16, 3 * 16]
+        words = hash_length / 16
+        written = 0
+        file = open(filename, "w")
+        last_id = contents[-1].id
+        to_output = min(10000, (last_id + 1))
+        file.write("%d %d %d %d " % ((last_id + 1),
+                                     to_output, words,
+                                     int(100 * (1 - min_similarity))))
+        factors = [str(40 - x) for x in range(32)]
+        file.write("%s\n" % (" ".join(factors)))
+        for id in range(last_id + 1):
+            content = contents_by_id.get(id, None)
+            if content is not None:
+                assert len(content.prepared_hash) in [16, 3 * 16], \
+                    [id, len(content.prepared_hash)]
+            available = (content is not None and
+                         len(content.prepared_hash) == hash_length)
+            if available:
+                tmp = []
+                for i in content.prepared_hash:
+                    i /= 256
+                    assert i >= 0 and i <= 255, content.prepared_hash
+                    tmp.append("%02x" % i)
+                if words == 3:
+                    tmp[2 * 16:2 * 16] = [" "]
+                    tmp[16:16] = [" "]
+                file.write("%s\n" % "".join(tmp))
+                written += 1
+            else:
+                file.write("na\n")
+        file.close()
+        if written:
+            # print "content histo = '%s'" % open(filename).read()
+            return [filename]
+        else:
+            return []
+
+    filename1 = "images_histo_bw.data"
+    filename2 = "images_histo_rgb.data"
+    return inner(filename1, 16) + inner(filename2, 3 * 16)
 
 
 class ImageComperator(object):
-    def __init__(self, db, sig_type, verbose_progress=1):
+    def __init__(self, db, sig_type, commit_every=12, verbose_progress=1):
         self.db = db
+        self.commit_every = commit_every
         self.verbose_progress = verbose_progress
         assert sig_type in [1, 2, 3, 4, 5]
         self.iht = sig_type
         if sig_type == 1:
             self.prepare = prepare_sig1
-            self.compare = compare_sig1
-        elif sig_type == 2:
+        elif sig_type in [2, 3, 4, 5]:
             self.prepare = prepare_hex_sig
-            self.compare = compare_sig_by_comparing_256_bits
-        elif sig_type == 3:
-            self.prepare = prepare_hex_sig
-            self.compare = compare_sig_by_comparing_64_bits
-        elif sig_type == 4:
-            self.prepare = prepare_hex_sig
-            self.compare = compare_sig_by_comparing_64_bits
-        elif sig_type == 5:
-            self.prepare = prepare_hex_sig
-            self.compare = compare_sig_by_comparing_64_bits
+        self.base_path = (os.path.abspath(os.path.dirname(dfr.model.__file__)
+                                          + "/../../../.."))
 
     def _find_contents(self):
+        prog = Progress(1, "Loading images",
+                        do_output=self.verbose_progress > 0)
         contents = self.db.content.find(isimage=1)
+        prog.work()
+        prog.finish()
+
+        prog = Progress(len(contents), "Loading image hashes",
+                        do_output=self.verbose_progress > 0)
         for content in contents:
             content.prepared_hash = None
             hashs = self.db.imagehash.find(contentid=content.id, iht=self.iht)
@@ -92,78 +110,70 @@ class ImageComperator(object):
                 assert len(hashs) == 1
                 if hashs[0].hash:
                     content.prepared_hash = self.prepare(hashs[0].hash)
+            prog.work()
         contents = [x for x in contents if x.prepared_hash is not None]
+        prog.finish()
         return contents
 
-    def get_open_tiles(self, contents, min_similarity):
-        res = []
-        all_tiles = get_tiles(contents)
-        for tile in all_tiles:
-            known = self.db.imagecmp.find(contentid1_first=tile.first1,
-                                          contentid2_first=tile.first2,
-                                          iht=self.iht)
-            if not known:
-                res.append(tile)
-            else:
-                assert len(known) == 1
-                known = known[0]
-                if known.similarity_threshold > min_similarity:
-                    self.db.imagecmp.delete(known)
-                    res.append(tile)
-                elif (known.contentid1_last != tile.last1 or
-                      known.contentid2_last != tile.last2):
-                    self.db.imagecmp.delete(known)
-                    res.append(tile)
-        return res
-
-    def save_tile(self, tile, min_similarity):
-        self.db.imagecmp.save(
-            ImageCmp(tile.first1, tile.last1, tile.first2,
-                     tile.last2, self.iht, min_similarity,
-                     tile.get_encoded_pairs()))
+    def read_results_into_db(self, filename, min_similarity):
+        # print "histo result = '%s'" % open(filename).read()
+        for line in file(filename).readlines():
+            # 0: 88 6=2,1,,,2,1,,,,,,,,,, 1:0 2:1 3:4 5:4 6:5 7:0
+            id, rest = line.split(":", 1)
+            score, counter, pairs = rest.strip().split(" ", 2)
+            id = int(id)
+            score = int(score)
+            counter = int(counter.split("=")[0])
+            pairs = pairs.split(" ")
+            assert counter == len(pairs)
+            self.db.imagecmp.save(ImageCmp(id, self.iht,
+                                           min_similarity, score,
+                                           len(pairs), " ".join(pairs)))
         self.db.commit()
+        os.remove(filename)
 
-    def calculate_tile(self, tile, min_similarity, contents_by_id):
-        contents1 = [contents_by_id.get(x, None) for x in
-                     range(tile.first1, tile.last1+1)]
-        contents2 = [contents_by_id.get(x, None) for x in
-                     range(tile.first2, tile.last2+1)]
-        contents1 = [x for x in contents1 if x]
-        contents2 = [x for x in contents2 if x]
+    def calculate_differences(self, contents, min_similarity):
 
-        for cont1 in contents1:
-            for cont2 in contents2:
-                if cont1.id >= cont2.id:
-                    continue
-                sim = self.compare(cont1.prepared_hash,
-                                   cont2.prepared_hash)
-                if sim >= min_similarity:
-                    tile.add(sim, cont1.id, cont2.id)
-        self.save_tile(tile, min_similarity)
+        for obj in self.db.imagecmp.find(iht=self.iht):
+            self.db.imagecmp.delete(obj)
 
-    def calculate_tiles(self, tiles, contents, min_similarity):
         contents_by_id = {}
         for i in contents:
             contents_by_id[i.id] = i
+        if self.iht in [2, 3, 4, 5]:
+            data_fn = write_image_hash_data_file(contents, contents_by_id,
+                                                 min_similarity)
+            result_fn = "hamming_distances"
 
-        prog = Progress(len(tiles), "Comparing images",
-                        do_output=self.verbose_progress > 0)
-        for tile in tiles:
-            self.calculate_tile(tile, min_similarity, contents_by_id)
-            prog.work()
-        prog.finish()
-
-    def ensure_that_all_tiles_are_calculated(self, min_similarity):
-        contents = self._find_contents()
-        contents.sort(lambda x, y: cmp(x.id, y.id))
-
-        tiles = self.get_open_tiles(contents, min_similarity)
-        if tiles:
-            self.calculate_tiles(tiles, contents, min_similarity)
-        else:
-            self.progress("INFO: Have compared all image signatures.\n")
+            args = [self.base_path + "/target/calc_hamming_distance",
+                    data_fn, result_fn]
+            if not self.verbose_progress:
+                args[1:1] = ["-q"]
+            subprocess.check_call(args)
+            self.read_results_into_db(result_fn, min_similarity)
+            os.remove(data_fn)
+        elif self.iht in [1]:
+            data_fns = write_image_histo_data_file(contents, contents_by_id,
+                                                   min_similarity)
+            result_fn = "histogram_distances"
+            for data_fn in data_fns:
+                args = [self.base_path + "/target/calc_histogram_distance",
+                        data_fn, result_fn]
+                if not self.verbose_progress:
+                    args[1:1] = ["-q"]
+                subprocess.check_call(args)
+                self.read_results_into_db(result_fn, min_similarity)
+                os.remove(data_fn)
 
     def progress(self, msg, level=1):
         if level <= self.verbose_progress:
             sys.stderr.write(msg)
             sys.stderr.flush()
+
+    def ensure_that_differences_are_calculated(self, min_similarity):
+        contents = self._find_contents()
+        contents.sort(lambda x, y: cmp(x.id, y.id))
+
+        if contents:
+            self.calculate_differences(contents, min_similarity)
+        self.progress("INFO: Have compared all image signatures.\n")

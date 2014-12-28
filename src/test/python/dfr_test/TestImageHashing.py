@@ -54,11 +54,11 @@ class Test(unittest.TestCase):
              "Makefile",
              "src/test/images/all_white_rgb.png",
              "src/test/images/pattern1.png"]),
-            ['ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+            ['ffffffffffffffff',
              None,
              None,
-             '0000000000000000000000000000000000000000000000000000000000000000',
-             'ff80ff80ff80ff80ff80ff80ffffffffffff03ff03ff03ff03ff03ff03ff03ff'])
+             '0000000000000000',
+             'f8f8f8ffff1f1f1f'])
 
     def test_signature2_for_coverage(self):
         CAUSE_UNEQUAL_LINES.append(1)

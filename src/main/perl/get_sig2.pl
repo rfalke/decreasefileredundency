@@ -29,14 +29,14 @@ while(<>)
 
     # only save if the image made a valid pbm.
     if (length($img) > 0) {
-	print "$hash ";
-	for ($i = 0; $i < length($img); $i++) {
-	    # convert each byte of pbm to a hex pair.
-	    print sprintf("%02x", ord(substr($img,$i,1)));
-	}
-	print "\n";
+        print "$hash ";
+        for ($i = 0; $i < length($img); $i++) {
+            # convert each byte of pbm to a hex pair.
+            print sprintf("%02x", ord(substr($img,$i,1)));
+    	}
+	    print "\n";
     } else {
-	print "$hash FAILED\n";
+	    print "$hash FAILED\n";
     }
 }
 
@@ -49,13 +49,13 @@ sub getfingerprint {
     #  here's a good a place as any to document the algorithm.  it's not
     #  so much an algorithm as a philosophy, it's kind of too lame to be
     #  an algorithm.  suggestions for improvement are very welcome.
-	
+
     #  1. read file.
     #  2. standardize size by resampling to 160x160.
     #  3. grayscale it. (reducing saturation seems faster than quantize.)
-    #  4. blur it a lot. (gets rid of noise.  we're going down 10x 
-    #     more anyway) adding this nudges down false dupes about 
-    #     10% and makes marginal dupes (e.g. big gamma difference) 
+    #  4. blur it a lot. (gets rid of noise.  we're going down 10x
+    #     more anyway) adding this nudges down false dupes about
+    #     10% and makes marginal dupes (e.g. big gamma difference)
     #     show up about 10% higher.
     #  5. spread the intensity out as much as possible (normalize.)
     #  6. make it as contrasty as possible (equalize.)
@@ -75,30 +75,30 @@ sub getfingerprint {
     my (@blobs, $img);
 
     -e $file or return "";
-	
+
     $x = $image->Read($file);
     return "" if "$x";
     $#$image = 0;
     $x = $image->Sample("160x160!");
-    return "" if "$x"; 
+    return "" if "$x";
     $x = $image->Modulate(saturation=>-100);
-    return "" if "$x"; 
+    return "" if "$x";
     #$x = $image->Blur(factor=>99);
     $x = $image->Blur(radius=>15, sigma=>19);
-    return "" if "$x"; 
+    return "" if "$x";
     $x = $image->Normalize();
-    return "" if "$x"; 
+    return "" if "$x";
     $x = $image->Equalize();
-    return "" if "$x"; 
-    $x = $image->Sample("16x16");
-    return "" if "$x"; 
+    return "" if "$x";
+    $x = $image->Sample("8x8");
+    return "" if "$x";
     $x = $image->Threshold();
-    return "" if "$x"; 
+    return "" if "$x";
     $x = $image->Set(magick=>'pbm');
-    return "" if "$x"; 
+    return "" if "$x";
     @blobs = $image->ImageToBlob();
-    return "" if "$x"; 
-    $img = substr($blobs[0],-32,32);
+    return "" if "$x";
+    $img = substr($blobs[0], -8, 8);
 
     # free image but don't delete object.
     undef @$image;

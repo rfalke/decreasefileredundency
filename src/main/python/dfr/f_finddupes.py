@@ -443,8 +443,9 @@ def main():
                         default=0.9,
                         help='require at least this image similarity')
     parser.add_argument('-S', '--image-signature',
-                        default=1,
-                        help="Image signature to use. Valid is '1' and '2'.")
+                        default=3,
+                        help="Image signature to use. Valid is 1, 2, 3, 4 " +
+                             "and 5. Default is 3.")
 
     args = parser.parse_args()
     repo = dfr.db.Database(args.db[0])

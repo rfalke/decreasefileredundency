@@ -68,7 +68,7 @@ def main():
     sim = float(args.min_similarity)
     for iht in signatures:
         comperator = ImageComperator(repo, iht)
-        comperator.ensure_that_all_tiles_are_calculated(sim)
+        comperator.ensure_that_differences_are_calculated(sim)
 
 
 if __name__ == '__main__':

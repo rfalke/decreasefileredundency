@@ -244,21 +244,20 @@ class ImageHashRepo(Repo):
 class ImageCmpRepo(Repo):
     def __init__(self, conn):
         Repo.__init__(self, conn, "imagecmp", ImageCmp,
-                      ["contentid1_first", "contentid1_last",
-                       "contentid2_first", "contentid2_last",
-                       "iht", "similarity_threshold", "pairs"])
+                      ["contentid", "iht",
+                       "similarity_threshold",
+                       "score", "numpairs", "pairs"])
 
     def build_where(self, query, builder):
         Repo.build_where(self, query, builder)
         assert len(query) == 0, query
 
     def construct(self, values):
-        id, contentid1_first, contentid1_last, \
-            contentid2_first, contentid2_last, \
-            iht, similarity_threshold, pairs = values
-        return ImageCmp(contentid1_first, contentid1_last,
-                        contentid2_first, contentid2_last,
-                        iht, similarity_threshold, pairs, id=id)
+        id, contentid, iht, similarity_threshold, score, numpairs, pairs = \
+            values
+        return ImageCmp(contentid, iht,
+                        similarity_threshold,
+                        score, numpairs, pairs, id=id)
 
 
 class ImageFeedbackRepo(Repo):
@@ -327,14 +326,13 @@ CREATE TABLE imagehash (
             self.conn.execute('''
 CREATE TABLE imagecmp (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  contentid1_first INTEGER NON NULL,
-  contentid1_last INTEGER NON NULL,
-  contentid2_first INTEGER NON NULL,
-  contentid2_last INTEGER NON NULL,
+  contentid INTEGER NON NULL,
   iht INTEGER NOT NULL,
   similarity_threshold REAL NOT NULL,
+  score INTEGER NON NULL,
+  numpairs INTEGER NON NULL,
   pairs TEXT NOT NULL,
-  UNIQUE (iht, contentid1_first, contentid2_first)
+  UNIQUE (contentid, iht)
 )''')
             self.conn.execute('''
 CREATE TABLE imagefeedback (
