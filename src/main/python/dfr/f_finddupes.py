@@ -9,7 +9,7 @@ from PIL import Image, ImageTk
 sys.path.append(os.path.dirname(os.path.dirname(sys.argv[0])))
 
 import dfr.db
-from dfr.bit_equal_finder import BitEqualFinder
+from dfr.bit_equal_finder import BitEqualFinder, BitEqualBucketFinder
 from dfr.bit_truncated_finder import BitTruncatedFinder
 from dfr.image_similar_finder import ImageSimilarFinder
 from dfr.support import format_bytes, add_common_command_line_arguments
@@ -28,17 +28,48 @@ class InteractiveResolver(object):
                 os.remove(path)
 
 
-class CsvBitEqualResolver(object):
-    def __init__(self):
-        print "size;hardlinked;path1;path2"
+class BaseFileResolver(object):
+    def __init__(self, filename, prefix):
+        self.filename = filename
+        if filename == "-":
+            self.out = sys.stdout
+        else:
+            self.out = open(filename, "w")
+        self.out.write(prefix)
+
+    def close_file(self, suffix=None):
+        if suffix:
+            self.out.write(suffix)
+        if self.filename != "-":
+            self.out.close()
+
+
+class CsvBitEqualResolver(BaseFileResolver):
+    def __init__(self, filename):
+        super(CsvBitEqualResolver,
+              self).__init__(filename, "size;hardlinked;path1;path2\n")
 
     # pylint: disable=R0201
     def resolve(self, pair):
-        print "%d;%s;%s;%s" % (
-            pair.size, pair.hardlinked, pair.path1, pair.path2)
+        self.out.write("%d;%s;%s;%s\n" % (
+            pair.size, pair.hardlinked, pair.path1, pair.path2))
 
     def finished(self):
-        pass
+        super(CsvBitEqualResolver, self).close_file()
+
+
+class JsonBitEqualResolver(BaseFileResolver):
+    def __init__(self, filename):
+        super(JsonBitEqualResolver, self).__init__(filename, '{"items":[\n')
+
+    # pylint: disable=R0201
+    def resolve(self, bucket):
+        self.out.write('  {"size": %d, "num_files": %d, "files": [%s]},\n' % (
+            bucket.size, len(bucket.files),
+            ", ".join(['"%s"' % x.path for x in bucket.files])))
+
+    def finished(self):
+        super(JsonBitEqualResolver, self).close_file(']}\n')
 
 
 class InteractiveBitEqualResolver(InteractiveResolver):
@@ -79,14 +110,14 @@ class InteractiveBitEqualResolver(InteractiveResolver):
     # pylint: disable=R0913
     def resolve(self, pair):
         progress = "[%d.%d/%d] " % (
-            pair.ctxt_index+1, pair.ctxt_subindex+1, pair.ctxt_size)
+            pair.ctxt_index + 1, pair.ctxt_subindex + 1, pair.ctxt_size)
 
         print "\nThe following files are equal and %s bytes large" % (
             format_bytes(pair.size))
         while True:
             print "  [1] %s" % pair.path1
             print "  [2] %s" % pair.path2
-            msg = progress+"sPreserve what? Press 1, 2, "
+            msg = progress + "sPreserve what? Press 1, 2, "
             if not pair.hardlinked:
                 msg += "'a' (to delete all), "
             msg += "'s' (to skip)."
@@ -114,18 +145,20 @@ class InteractiveBitEqualResolver(InteractiveResolver):
         pass
 
 
-class CsvBitTruncatedResolver(object):
-    def __init__(self):
-        print "largesize;largepath;smallsize;smallpath"
+class CsvBitTruncatedResolver(BaseFileResolver):
+    def __init__(self, filename):
+        super(CsvBitTruncatedResolver,
+              self).__init__(filename,
+                             "largesize;largepath;smallsize;smallpath\n")
 
     # pylint: disable=R0201
     def resolve(self, pair):
-        print "%d;%s;%s;%s" % (
+        self.out.write("%d;%s;%s;%s\n" % (
             pair.large_size, pair.large_path,
-            pair.small_size, pair.small_path)
+            pair.small_size, pair.small_path))
 
     def finished(self):
-        pass
+        super(CsvBitTruncatedResolver, self).close_file()
 
 
 class InteractiveBitTruncatedResolver(InteractiveResolver):
@@ -134,7 +167,7 @@ class InteractiveBitTruncatedResolver(InteractiveResolver):
 
     def resolve(self, pair):
         progress = "[%d.%d/%d] " % (
-            pair.ctxt_index+1, pair.ctxt_subindex+1, pair.ctxt_size)
+            pair.ctxt_index + 1, pair.ctxt_subindex + 1, pair.ctxt_size)
 
         print "\n%sThe file '%s' is a shorter version of '%s'" % (
             progress, pair.small_path, pair.large_path)
@@ -162,18 +195,18 @@ class ImageRelated(object):
         self.file_size = os.path.getsize(path)
         self.image = Image.open(path)
         self.pixels = self.image.size[0] * self.image.size[1]
-        self.bpp = self.file_size/float(self.pixels)
+        self.bpp = self.file_size / float(self.pixels)
         self.scaled_image = self.scale(background)
         self.tk_image = ImageTk.PhotoImage(self.scaled_image)
 
     def scale(self, background):
         img = self.image
         size = img.size
-        factor_x = self.max_image_size[0]/float(size[0])
-        factor_y = self.max_image_size[1]/float(size[1])
+        factor_x = self.max_image_size[0] / float(size[0])
+        factor_y = self.max_image_size[1] / float(size[1])
         factor = min(factor_x, factor_y)
         if factor < 1:
-            new_size = (int(size[0]*factor), int(size[1]*factor))
+            new_size = (int(size[0] * factor), int(size[1] * factor))
             img = img.resize(new_size)
 
         new = Image.new("RGB", self.max_image_size, background)
@@ -199,7 +232,7 @@ def split_path(str):
     lines = []
     tmp = ""
     for i in str.split("/"):
-        tmp += i+"/"
+        tmp += i + "/"
         if len(tmp) > 30:
             lines.append(tmp)
             tmp = ""
@@ -212,19 +245,20 @@ def get_screen_size(root):
     return (root.winfo_screenwidth(), root.winfo_screenheight())
 
 
-class CsvImageSimilarResolver(object):
-    def __init__(self):
-        print "similarity;path1;path2"
+class CsvImageSimilarResolver(BaseFileResolver):
+    def __init__(self, filename):
+        super(CsvImageSimilarResolver,
+              self).__init__(filename, "similarity;path1;path2\n")
 
     # pylint: disable=R0201
     def resolve(self, pair):
-        print "%f;%s;%s" % (
+        self.out.write("%f;%s;%s\n" % (
             pair.similarity,
             pair.path1,
-            pair.path2)
+            pair.path2))
 
     def finished(self):
-        pass
+        super(CsvImageSimilarResolver, self).close_file()
 
 
 class GuiImageSimilarResolver(object):
@@ -240,8 +274,8 @@ class GuiImageSimilarResolver(object):
         self.root.bind('<Right>', self.goto_next)
         self.root.bind('f', self.toggle_skip)
         screen_size = get_screen_size(self.root)
-        self.max_image_size = (int(0.4*screen_size[0]),
-                               int(0.75*screen_size[1]))
+        self.max_image_size = (int(0.4 * screen_size[0]),
+                               int(0.75 * screen_size[1]))
         self.pairs = []
         self.item_frame = Frame(self.root)
         self.background = self.item_frame.cget("background")
@@ -290,7 +324,7 @@ class GuiImageSimilarResolver(object):
             if self.index < 0:
                 self.index = 0
             if self.index >= len(self.pairs):
-                self.index = len(self.pairs)-1
+                self.index = len(self.pairs) - 1
             if self.index == last_index:
                 break
             if not self.skip_pairs_with_feedback:
@@ -392,7 +426,7 @@ class GuiImageSimilarResolver(object):
 
         self.item_frame.config(background=background)
         text = "%d/%d similarity=%f feedback = %s skip=%d" % (
-            self.index+1, len(self.pairs),
+            self.index + 1, len(self.pairs),
             self.pairs[self.index].similarity, feedback,
             self.skip_pairs_with_feedback)
         self.label_sim.config(background=background, text=text)
@@ -426,56 +460,68 @@ def main():
         description='Find files with equal or similar content.')
     parser.add_argument('roots', metavar='DIR', nargs='*', default=["."],
                         help="a directory to scan for duplicate files " +
-                        "(if not given '.' will be used)")
+                             "(if not given '.' will be used)")
     add_common_command_line_arguments(parser)
-    parser.add_argument('-c', '--csv', action="store_true",
-                        help='print all findings as a CSV using instead ' +
-                        'of resolve interactive')
-    parser.add_argument('-n', '--dry-run', action="store_true", dest='dry_run',
-                        help='do not delete any files')
-    parser.add_argument('-t', '--truncated', action="store_true",
-                        dest='truncated',
-                        help='search for truncated files')
-    parser.add_argument('-i', '--image', action="store_true",
-                        dest='image',
-                        help='search for similar images')
+    parser.add_argument('-t', '--output-type', default="interactive",
+                        help='determine the output type. Valid values are ' +
+                             '"interactive", "csv" and "json". ' +
+                             'Default is "interactive".')
+    parser.add_argument('-o', '--output', default="-",
+                        help='The output file name. "-" stands for stdout. ' +
+                             'Default is "-".')
+    parser.add_argument('-w', '--what', default="bitequal",
+                        help='determine what is searched. Valid values are ' +
+                             '"bitequal" for files which are equal ' +
+                             'bit-wise, "truncated" for files which are ' +
+                             'truncated (the larger files consists of the ' +
+                             'smaller file and some extra content ' +
+                             'afterwards) and "image" to search for similar ' +
+                             'images. Default is "bitequal".')
     parser.add_argument('-s', '--min-similarity',
                         default=0.9,
-                        help='require at least this image similarity')
+                        help='require at least this image similarity. ' +
+                             'Default is "0.9".')
     parser.add_argument('-S', '--image-signature',
                         default=3,
-                        help="Image signature to use. Valid is 1, 2, 3, 4 " +
-                             "and 5. Default is 3.")
+                        help='Image signature to use. Valid is 1, 2, 3, 4 ' +
+                             'and 5. Default is "3".')
+    parser.add_argument('-n', '--dry-run', action="store_true", dest='dry_run',
+                        help='do not delete any files')
 
     args = parser.parse_args()
     repo = dfr.db.Database(args.db[0])
 
-    if args.image:
-        if args.csv:
-            resolver = CsvImageSimilarResolver()
+    if args.what == "image":
+        if args.output_type == "csv":
+            resolver = CsvImageSimilarResolver(args.output)
         else:
             resolver = GuiImageSimilarResolver(args.dry_run)
         finder = ImageSimilarFinder(repo, args.roots,
                                     int(args.image_signature))
         found_items = finder.find(float(args.min_similarity))
-    elif args.truncated:
-        if args.csv:
-            resolver = CsvBitTruncatedResolver()
+    elif args.what == "truncated":
+        if args.output_type == "csv":
+            resolver = CsvBitTruncatedResolver(args.output)
         else:
             resolver = InteractiveBitTruncatedResolver(args.dry_run)
         finder = BitTruncatedFinder(repo, args.roots)
         found_items = finder.find()
     else:
-        if args.csv:
-            resolver = CsvBitEqualResolver()
+        finder = BitEqualFinder(repo, args.roots)
+        if args.output_type == "json":
+            resolver = JsonBitEqualResolver(args.output)
+            finder = BitEqualBucketFinder(repo, args.roots)
+        elif args.output_type == "csv":
+            resolver = CsvBitEqualResolver(args.output)
         else:
             resolver = InteractiveBitEqualResolver(args.dry_run)
-        finder = BitEqualFinder(repo, args.roots)
+
         found_items = finder.find()
 
     for item in found_items:
         resolver.resolve(item)
     resolver.finished()
+
 
 if __name__ == '__main__':
     main()
