@@ -2,7 +2,6 @@ import sys
 
 from dfr.bit_equal_finder import BaseFinder
 from dfr.model import ImageFeedback
-from dfr.progress import Progress
 
 
 class ImageSimiliarFilePair(object):
@@ -57,13 +56,16 @@ class ImageSimilarFinder(BaseFinder):
 
     def _find_contents(self):
         contents = self.db.content.find(isimage=1)
-        prog = Progress(len(contents), "Searching image files")
         for content in contents:
-            content.files = self._find_files_for_content_id(content.id)
-            prog.work()
-        contents = [x for x in contents if x.files]
-        prog.finish()
+            content.paths_loaded = False
         return contents
+
+    def get_paths(self, content):
+        if not content.paths_loaded:
+            files = self._find_files_for_content_id(content.id)
+            content.paths = [x.path for x in files]
+            content.paths_loaded = True
+        return content.paths
 
     def find(self, min_similarity):
         contents = self._find_contents()
@@ -85,14 +87,18 @@ class ImageSimilarFinder(BaseFinder):
 
     def handle(self, obj, content_by_id, min_similarity, position):
         content1 = content_by_id[obj.contentid]
-        file1 = content1.files[0].path
+        paths1 = self.get_paths(content1)
+        if not paths1:
+            return
         pairs = obj.get_pairs()
         for contentid2, similarity in pairs:
             content2 = content_by_id[contentid2]
-            file2 = content2.files[0].path
+            paths2 = self.get_paths(content2)
+            if not paths2:
+                continue
             if similarity >= min_similarity:
                 index, num_findings = position
-                yield ImageSimiliarFilePair(similarity, file1, file2,
+                yield ImageSimiliarFilePair(similarity, paths1[0], paths2[0],
                                             index, num_findings, self.db,
                                             content1.id, content2.id)
 
@@ -104,13 +110,16 @@ class ImageSimilarBucketFinder(ImageSimilarFinder):
 
     def handle(self, obj, content_by_id, min_similarity, position):
         center = content_by_id[obj.contentid]
-        center_paths = [x.path for x in center.files]
+        center_paths = self.get_paths(center)
+        if not center_paths:
+            return
         pairs = obj.get_pairs()
         others = []
         for contentid2, similarity in pairs:
             if similarity >= min_similarity:
                 other = content_by_id[contentid2]
-                other_paths = [x.path for x in other.files]
-                others.append((similarity, other_paths))
+                other_paths = self.get_paths(other)
+                if other_paths:
+                    others.append((similarity, other_paths))
         if others:
             yield ImageSimiliarFileBucket(obj.score, center_paths, others)
