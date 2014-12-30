@@ -1,4 +1,3 @@
-
 import sys
 
 from dfr.bit_equal_finder import BaseFinder
@@ -41,6 +40,14 @@ class ImageSimiliarFilePair(object):
             self.db.commit()
 
 
+class ImageSimiliarFileBucket(object):
+    # pylint: disable=R0913
+    def __init__(self, score, center, others):
+        self.score = score
+        self.center = center
+        self.others = others
+
+
 class ImageSimilarFinder(BaseFinder):
     def __init__(self, db, roots, sig_type, verbose_progress=1):
         BaseFinder.__init__(self, db, roots)
@@ -67,18 +74,43 @@ class ImageSimilarFinder(BaseFinder):
         res = self.db.imagecmp.find(iht=self.iht, sort="score DESC")
         for index in range(len(res)):
             obj = res[index]
-            content1 = content_by_id[obj.contentid]
-            file1 = content1.files[0].path
-            pairs = obj.get_pairs()
-            for contentid2, similarity in pairs:
-                content2 = content_by_id[contentid2]
-                file2 = content2.files[0].path
-                if similarity >= min_similarity:
-                    yield ImageSimiliarFilePair(similarity, file1, file2,
-                                                index, len(res), self.db,
-                                                content1.id, content2.id)
+            for i in self.handle(obj, content_by_id, min_similarity,
+                                 (index, len(res))):
+                yield i
 
     def progress(self, msg, level=1):
         if level <= self.verbose_progress:
             sys.stderr.write(msg)
             sys.stderr.flush()
+
+    def handle(self, obj, content_by_id, min_similarity, position):
+        content1 = content_by_id[obj.contentid]
+        file1 = content1.files[0].path
+        pairs = obj.get_pairs()
+        for contentid2, similarity in pairs:
+            content2 = content_by_id[contentid2]
+            file2 = content2.files[0].path
+            if similarity >= min_similarity:
+                index, num_findings = position
+                yield ImageSimiliarFilePair(similarity, file1, file2,
+                                            index, num_findings, self.db,
+                                            content1.id, content2.id)
+
+
+class ImageSimilarBucketFinder(ImageSimilarFinder):
+    def __init__(self, db, roots, sig_type, verbose_progress=1):
+        ImageSimilarFinder.__init__(self, db, roots, sig_type,
+                                    verbose_progress)
+
+    def handle(self, obj, content_by_id, min_similarity, position):
+        center = content_by_id[obj.contentid]
+        center_paths = [x.path for x in center.files]
+        pairs = obj.get_pairs()
+        others = []
+        for contentid2, similarity in pairs:
+            if similarity >= min_similarity:
+                other = content_by_id[contentid2]
+                other_paths = [x.path for x in other.files]
+                others.append((similarity, other_paths))
+        if others:
+            yield ImageSimiliarFileBucket(obj.score, center_paths, others)

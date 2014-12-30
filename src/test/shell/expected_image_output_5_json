@@ -1,0 +1,4 @@
+{"items":[
+  {"score": 80, "center": {"paths": ["big/Nice-Bee.jpeg"]}, "others": [{"paths": ["big/Nice-Bee_smaller.jpeg"], "similarity": 1.0}]}
+  {"score": 80, "center": {"paths": ["big/Nice-Bee_smaller.jpeg"]}, "others": [{"paths": ["big/Nice-Bee.jpeg"], "similarity": 1.0}]}
+]}

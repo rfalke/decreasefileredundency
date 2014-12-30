@@ -11,8 +11,10 @@ sys.path.append(os.path.dirname(os.path.dirname(sys.argv[0])))
 import dfr.db
 from dfr.bit_equal_finder import BitEqualFinder, BitEqualBucketFinder
 from dfr.bit_truncated_finder import BitTruncatedFinder
-from dfr.image_similar_finder import ImageSimilarFinder
+from dfr.image_similar_finder import ImageSimilarFinder, \
+    ImageSimilarBucketFinder
 from dfr.support import format_bytes, add_common_command_line_arguments
+from json import dumps
 
 
 class InteractiveResolver(object):
@@ -261,6 +263,25 @@ class CsvImageSimilarResolver(BaseFileResolver):
         super(CsvImageSimilarResolver, self).close_file()
 
 
+class JsonImageSimilarResolver(BaseFileResolver):
+    def __init__(self, filename):
+        super(JsonImageSimilarResolver,
+              self).__init__(filename, '{"items":[\n')
+
+    # pylint: disable=R0201
+    def resolve(self, bucket):
+        to_write = {"score": bucket.score, "center": {"paths": bucket.center},
+                    "others": []}
+        for sim, paths in bucket.others:
+            tmp = {"similarity": sim, "paths": paths}
+            to_write["others"].append(tmp)
+
+        self.out.write('  %s\n' % dumps(to_write))
+
+    def finished(self):
+        super(JsonImageSimilarResolver, self).close_file(']}\n')
+
+
 class GuiImageSimilarResolver(object):
     def __init__(self, dry_run):
         self.dry_run = dry_run
@@ -492,12 +513,16 @@ def main():
     repo = dfr.db.Database(args.db[0])
 
     if args.what == "image":
-        if args.output_type == "csv":
+        finder = ImageSimilarFinder(repo, args.roots,
+                                    int(args.image_signature))
+        if args.output_type == "json":
+            resolver = JsonImageSimilarResolver(args.output)
+            finder = ImageSimilarBucketFinder(repo, args.roots,
+                                              int(args.image_signature))
+        elif args.output_type == "csv":
             resolver = CsvImageSimilarResolver(args.output)
         else:
             resolver = GuiImageSimilarResolver(args.dry_run)
-        finder = ImageSimilarFinder(repo, args.roots,
-                                    int(args.image_signature))
         found_items = finder.find(float(args.min_similarity))
     elif args.what == "truncated":
         if args.output_type == "csv":

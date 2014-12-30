@@ -1,0 +1,5 @@
+{"items":[
+  {"score": 160, "center": {"paths": ["big/Nice-Bee.jpeg"]}, "others": [{"paths": ["big/Nice-Bee_as_png.png"], "similarity": 1.0}, {"paths": ["big/Nice-Bee_smaller.jpeg"], "similarity": 1.0}]}
+  {"score": 160, "center": {"paths": ["big/Nice-Bee_as_png.png"]}, "others": [{"paths": ["big/Nice-Bee.jpeg"], "similarity": 1.0}, {"paths": ["big/Nice-Bee_smaller.jpeg"], "similarity": 1.0}]}
+  {"score": 160, "center": {"paths": ["big/Nice-Bee_smaller.jpeg"]}, "others": [{"paths": ["big/Nice-Bee.jpeg"], "similarity": 1.0}, {"paths": ["big/Nice-Bee_as_png.png"], "similarity": 1.0}]}
+]}
