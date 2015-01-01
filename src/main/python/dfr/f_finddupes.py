@@ -66,8 +66,12 @@ class JsonBitEqualResolver(BaseFileResolver):
 
     # pylint: disable=R0201
     def resolve(self, bucket):
-        self.out.write('  {"size": %d, "num_files": %d, "files": [%s]},\n' % (
-            bucket.size, len(bucket.files),
+        if bucket.is_first:
+            comma = ""
+        else:
+            comma = ","
+        self.out.write('  %s{"size": %d, "num_files": %d, "files": [%s]}\n' % (
+            comma, bucket.size, len(bucket.files),
             ", ".join(['"%s"' % x.path for x in bucket.files])))
 
     def finished(self):

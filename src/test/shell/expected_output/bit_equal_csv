@@ -1,2 +1,5 @@
 size;hardlinked;path1;path2
+102400;False;another_base;another_base2
+102400;False;another_base;another_base3
+102400;False;another_base2;another_base3
 43008;False;base;base2

@@ -16,6 +16,10 @@ mkdir $DIR/ignore_dir
 cp $DIR/base $DIR/ignore_dir/base2
 echo >>$DIR/larger
 
+dd if=/dev/urandom of=$DIR/another_base bs=1k count=100
+cp $DIR/another_base $DIR/another_base2
+cp $DIR/another_base $DIR/another_base3
+
 python src/main/python/dfr/f_index.py --db-file=$DB -x '*gn*re' -X 'ig[a-n]*_dir' $DIR
 
 # bitequal, csv

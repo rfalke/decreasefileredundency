@@ -33,9 +33,10 @@ class BitEqualFilePair(object):
 
 class BitEqualBucket(object):
     # pylint: disable=R0913
-    def __init__(self, size, files):
+    def __init__(self, size, files, is_first):
         self.size = size
         self.files = files
+        self.is_first = is_first
 
 
 class BaseFinder(object):
@@ -115,6 +116,7 @@ class BitEqualBucketFinder(BaseFinder):
 
     def find(self):
         contents = self._find_multiple_referenced_content()
+        is_first = True
 
         for content_index in range(len(contents)):
             content = contents[content_index]
@@ -127,4 +129,5 @@ class BitEqualBucketFinder(BaseFinder):
             if len(files) > 1:
                 yield BitEqualBucket(
                     content.size,
-                    files)
+                    files, is_first)
+                is_first = False

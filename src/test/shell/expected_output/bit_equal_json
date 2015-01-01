@@ -1,3 +1,4 @@
 {"items":[
-  {"size": 43008, "num_files": 2, "files": ["base", "base2"]},
+  {"size": 102400, "num_files": 3, "files": ["another_base", "another_base2", "another_base3"]}
+  ,{"size": 43008, "num_files": 2, "files": ["base", "base2"]}
 ]}
