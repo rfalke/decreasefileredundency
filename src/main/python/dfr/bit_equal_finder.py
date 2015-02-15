@@ -2,6 +2,7 @@ import os
 
 from dfr.db import In
 from dfr.support import abspath, chunker
+from dfr.progress import Progress
 
 
 def compare_files(file1, file2):
@@ -90,7 +91,7 @@ class BitEqualFinder(BaseFinder):
                 for j in range(i + 1, len(files)):
                     inner = files[j]
                     if True and (os.path.isfile(outer.path) and
-                                 os.path.isfile(inner.path)):
+                                     os.path.isfile(inner.path)):
                         yield BitEqualFilePair(
                             content.size,
                             os.path.samefile(outer.path, inner.path),
@@ -115,9 +116,13 @@ class BitEqualBucketFinder(BaseFinder):
         return contents
 
     def find(self):
+        prog = Progress(1, "Searching for duplicated files", do_output=1)
         contents = self._find_multiple_referenced_content()
+        prog.work()
+        prog.finish()
         is_first = True
 
+        prog = Progress(len(contents), "Output", do_output=1)
         for content_index in range(len(contents)):
             content = contents[content_index]
             all_files = self._find_files_for_content_id(content.id)
@@ -131,3 +136,5 @@ class BitEqualBucketFinder(BaseFinder):
                     content.size,
                     files, is_first)
                 is_first = False
+            prog.work()
+        prog.finish()
