@@ -259,7 +259,7 @@ static void recalc_relevant_for_output(FILE * output)
 				    __builtin_popcountll(to_compare ^
 							 (data[y]));
 				if (distance <= max_dist && available[y]) {
-					fprintf(output, " %d:%ld", y, distance);
+					fprintf(output, " %d:%lld", y, distance);
 				}
 			}
 			fprintf(output, "\n");
