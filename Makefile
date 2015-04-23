@@ -1,4 +1,5 @@
 COVERAGE=coverage-2.7
+CFLAGS=-std=c99 -march=amdfam10 -O2 -Wall -Werror -fno-strict-aliasing
 
 tests: compile_c pep8 pylint python_tests shell_tests
 
@@ -6,13 +7,13 @@ compile_c: target/calc_hamming_distance target/calc_histogram_distance
 
 target/calc_hamming_distance: Makefile src/main/c/calc_hamming_distance.c
 	mkdir -p target
-	gcc -g -std=c99 -march=amdfam10 -O2 -Wall -Werror src/main/c/calc_hamming_distance.c -o target/calc_hamming_distance
-	objdump -d target/calc_hamming_distance >target/calc_hamming_distance.s
+	gcc -g $(CFLAGS) src/main/c/calc_hamming_distance.c -o target/calc_hamming_distance
+	-objdump -d target/calc_hamming_distance >target/calc_hamming_distance.s
 
 target/calc_histogram_distance: Makefile src/main/c/calc_histogram_distance.c
 	mkdir -p target
-	gcc -g -std=c99 -march=amdfam10 -O2 -Wall -Werror src/main/c/calc_histogram_distance.c -o target/calc_histogram_distance
-	objdump -d target/calc_histogram_distance >target/calc_histogram_distance.s
+	gcc -g $(CFLAGS) src/main/c/calc_histogram_distance.c -o target/calc_histogram_distance
+	-objdump -d target/calc_histogram_distance >target/calc_histogram_distance.s
 
 indent_c:
 	indent -linux src/main/c/calc_hamming_distance.c
