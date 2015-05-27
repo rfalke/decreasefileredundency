@@ -33,9 +33,10 @@ def calc_sig2(pairs):
     sigs = get_image_signatures2(files)
 
     res = {}
-    for i in range(len(pairs)):
-        contentid, files = pairs[i]
-        res[contentid] = sigs[i]
+    if sigs is not None:
+        for i in range(len(pairs)):
+            contentid, files = pairs[i]
+            res[contentid] = sigs[i]
     return res
 
 

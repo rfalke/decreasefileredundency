@@ -19,7 +19,7 @@ class Test(TestCase):
             indexer = BitIndexer(the_db, DO_NOT_MATCH_RE, DO_NOT_MATCH_RE, verbose_progress=0)
             indexer.run(["src/test/images/big"])
 
-            indexer = ImageIndexer(the_db, [1, 2, 3, 4, 5], verbose_progress=0)
+            indexer = ImageIndexer(the_db, [1, 3, 4], verbose_progress=0)
             indexer.run()
 
             self.verify_db_rows_for_big_images(db_fn)
@@ -31,7 +31,7 @@ class Test(TestCase):
             indexer = BitIndexer(the_db, DO_NOT_MATCH_RE, DO_NOT_MATCH_RE, verbose_progress=0)
             indexer.run(["src/test/images/big"])
 
-            indexer = ImageIndexer(the_db, [1, 2, 3, 4, 5],
+            indexer = ImageIndexer(the_db, [1, 3, 4],
                                    verbose_progress=0, commit_every=0.01, parallel_threads=4)
             indexer.run()
 
@@ -53,12 +53,10 @@ class Test(TestCase):
                             "FROM file,content,imagehash " +
                             "WHERE file.contentid = content.id AND content.id = imagehash.contentid " +
                             "ORDER BY file.name").fetchall()
-        self.assertEqual(len(rows), 6 * 11 - 1)
-        self.assertIn((u'Nice-Bee.jpeg', 1, u'646 d3c f3f da9 e83 13da 1c6b 1d4c 1fa9 17ce 18d7 f31 92b 50f 29a 326 60a d23 b5e a61 afa c71 1285 1a25 256c 1a4f 1f47 1a3d e0d 67f 253 2d9 ca3 13e3 ce4 92b 7fc 90c 745 79d 90d b88 ea1 188c 203b 26ab 1a31 c9f'), rows)
-        self.assertIn((u'Nice-Bee.jpeg', 2, u'809f9f3fff7f9efb'), rows)
+        self.assertEqual(len(rows), 3 * 13)
+        self.assertIn((u'Nice-Bee.jpeg', 1, u'651 d38 f3f da4 e83 13d6 1c71 1d49 1f96 17da 18d2 f36 92c 510 29d 328 607 d24 b5e a66 af5 c6e 128a 1a1f 256e 1a50 1f42 1a45 e09 680 254 2d8 ca4 13e7 cf3 92a 7ee 90a 74f 799 902 b81 e9a 1885 203e 26ba 1a2f ca5'), rows)
         self.assertIn((u'Nice-Bee.jpeg', 3, u'cd3ac3371dab6360'), rows)
         self.assertIn((u'Nice-Bee.jpeg', 4, u'eff8f0c080d7f93c'), rows)
-        self.assertIn((u'Nice-Bee.jpeg', 5, u'9378f06307fe7083'), rows)
 
     def test_coverage(self):
         with TempDir() as tmpdir:

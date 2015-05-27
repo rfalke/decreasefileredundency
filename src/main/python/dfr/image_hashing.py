@@ -4,7 +4,10 @@ import tempfile
 import os
 import ctypes
 
-PHASH_LIB = ctypes.CDLL('libpHash.so.0', use_errno=True)
+try:
+    PHASH_LIB = ctypes.CDLL('libpHash.so.0', use_errno=True)
+except OSError:
+    PHASH_LIB = None
 
 
 def shell_quote(str):
@@ -77,6 +80,9 @@ def get_image_signatures2(filenames):
                     else:
                         assert len(hash) == 16
                         hashs.append(hash)
+            # Guess that the perl script does not work because of missing deps
+            if len(hashs) == 0:
+                return None
             if len(hashs) != len(filenames) or CAUSE_UNEQUAL_LINES:
                 raise KeyboardInterrupt()
             return hashs
@@ -176,6 +182,8 @@ From https://github.com/mk-fg/image-deduplication-tool
 Uses pHash.
     """
 
+    if PHASH_LIB is None:
+        return None
     phash = ctypes.c_uint64()
     if PHASH_LIB.ph_dct_imagehash(filename, ctypes.pointer(phash)):
         return None

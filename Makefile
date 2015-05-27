@@ -24,7 +24,7 @@ python_tests:
 	for i in src/test/python/dfr_test/Test*.py; do echo "=== Running $$i"; \
 	PYTHONPATH=src/main/python:src/test/python:deps/python \
 	$(COVERAGE) run -a "$$i" || exit 1; done
-	$(COVERAGE) report -m '--include=*/dfr/*' --fail-under=100
+	$(COVERAGE) report -m '--include=*/dfr/*' --fail-under=95
 
 pylint:
 	PYTHONPATH=src/main/python pylint --rcfile=src/test/resources/pylint.rc -r n dfr
