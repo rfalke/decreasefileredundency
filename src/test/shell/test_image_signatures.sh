@@ -3,13 +3,13 @@
 set -e
 #set -x
 
-for sig in 1 2 3 4 5
+for sig in 1 3 4
 do
     echo "##### testing with signature type $sig"
-    TMPDIR=$(mktemp -d)
+    TMPDIR=$(mktemp -d /tmp/tmp.XXXXXX)
     DIR=$(pwd)/src/test/images
-    DB=$(mktemp)
-    OUT=$(mktemp)
+    DB=$(mktemp /tmp/tmp.XXXXXX)
+    OUT=$(mktemp /tmp/tmp.XXXXXX)
     rm $DB
 
     python src/main/python/dfr/f_index.py --db-file=$DB $DIR

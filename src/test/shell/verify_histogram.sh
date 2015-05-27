@@ -3,7 +3,7 @@
 set -e
 #set -x
 
-OUT=$(mktemp -d)
+OUT=$(mktemp -d /tmp/tmp.XXXXXX)
 target/calc_histogram_distance -q src/test/shell/histogram_input_data_gray $OUT/output
 diff -u src/test/shell/expected_output/histogram_gray $OUT/output
 

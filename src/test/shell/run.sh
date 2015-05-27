@@ -3,9 +3,10 @@
 set -e
 #set -x
 
-DIR=$(mktemp -d)
-DB=$(mktemp)
-OUT=$(mktemp)
+DIR=$(mktemp -d /tmp/tmp.XXXXXX)
+DIR=$(cd $DIR;pwd -P)
+DB=$(mktemp /tmp/tmp.XXXXXX)
+OUT=$(mktemp /tmp/tmp.XXXXXX)
 rm $DB
 
 dd if=/dev/urandom of=$DIR/base bs=1k count=42
