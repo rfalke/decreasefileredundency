@@ -48,12 +48,13 @@ class Test(unittest.TestCase):
             0, 0, 0, 0, 1, 0, 5, 0, 0, 0, 1, 0, 0, 0, 0, 86])
 
     def test_signature2(self):
-        self.assertEqual(get_image_signatures2(
-            ["src/test/images/all_black_rgb.png",
-             "does not exists",
-             "Makefile",
-             "src/test/images/all_white_rgb.png",
-             "src/test/images/pattern1.png"]),
+        self.assertEqual(
+            get_image_signatures2(
+                ["src/test/images/all_black_rgb.png",
+                 "does not exists",
+                 "Makefile",
+                 "src/test/images/all_white_rgb.png",
+                 "src/test/images/pattern1.png"]),
             ['ffffffffffffffff',
              None,
              None,

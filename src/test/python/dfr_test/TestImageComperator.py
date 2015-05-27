@@ -227,7 +227,7 @@ class Test(TestCase):
                 comperator = ImageComperator(the_db, 3, verbose_progress=5)
                 comperator.ensure_that_differences_are_calculated(0.9)
                 comperator.ensure_that_differences_are_calculated(0.9)
-            self.assertTrue(True)
+            self.assert_no_exception()
 
 
 if __name__ == '__main__':

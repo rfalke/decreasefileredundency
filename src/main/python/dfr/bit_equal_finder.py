@@ -91,7 +91,7 @@ class BitEqualFinder(BaseFinder):
                 for j in range(i + 1, len(files)):
                     inner = files[j]
                     if True and (os.path.isfile(outer.path) and
-                                     os.path.isfile(inner.path)):
+                                 os.path.isfile(inner.path)):
                         yield BitEqualFilePair(
                             content.size,
                             os.path.samefile(outer.path, inner.path),

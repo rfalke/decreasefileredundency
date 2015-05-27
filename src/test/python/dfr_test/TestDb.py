@@ -48,7 +48,7 @@ class Test(TestCase):
             db_name = os.path.join(tmpdir.name, "files.sdb")
             with NoStderr():
                 Database(db_name, verbose=1)
-            self.assertTrue(True)
+            self.assert_no_exception()
 
     def test_dir_repo(self):
         with TempDir() as tmpdir:

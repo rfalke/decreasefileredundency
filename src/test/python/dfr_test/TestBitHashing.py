@@ -63,8 +63,7 @@ class Test(unittest.TestCase):
                                       524288L: '6c10df9ee9fa4b1c8495b19becb7f8ae8a07ad96',
                                       1048576L: 'ecfc8e86fdd83811f9cc9bf500993b63069923be',
                                       2097152L: '3394ba403303c0784f836bdb1ee13a4bfd14e6de',
-                                      4194304L: 'd697024ed93ff625330d050391ade99cd5cbddad'
-                                      }, False))
+                                      4194304L: 'd697024ed93ff625330d050391ade99cd5cbddad'}, False))
 
     def test_file_of_buffer_size(self):
         with TempDir() as tmpdir:
@@ -82,8 +81,7 @@ class Test(unittest.TestCase):
                                       262144L: '37ef77696fc255bf53b4cdd014b223676f2dc8bb',
                                       524288L: '6c10df9ee9fa4b1c8495b19becb7f8ae8a07ad96',
                                       1048576L: 'ecfc8e86fdd83811f9cc9bf500993b63069923be',
-                                      2097152L: '3394ba403303c0784f836bdb1ee13a4bfd14e6de'
-                                      }, False))
+                                      2097152L: '3394ba403303c0784f836bdb1ee13a4bfd14e6de'}, False))
 
     def test_image_detection(self):
         with TempDir() as tmpdir:

@@ -80,7 +80,7 @@ class Test(TestCase):
                 indexer = ImageIndexer(the_db, [1], verbose_progress=5, commit_every=0.01)
                 indexer.run()
 
-            self.assertTrue(True)
+            self.assert_no_exception()
 
 if __name__ == '__main__':
     unittest.main()

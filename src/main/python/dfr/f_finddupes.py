@@ -485,31 +485,31 @@ def main():
         description='Find files with equal or similar content.')
     parser.add_argument('roots', metavar='DIR', nargs='*', default=["."],
                         help="a directory to scan for duplicate files " +
-                             "(if not given '.' will be used)")
+                        "(if not given '.' will be used)")
     add_common_command_line_arguments(parser)
     parser.add_argument('-t', '--output-type', default="interactive",
                         help='determine the output type. Valid values are ' +
-                             '"interactive", "csv" and "json". ' +
-                             'Default is "interactive".')
+                        '"interactive", "csv" and "json". ' +
+                        'Default is "interactive".')
     parser.add_argument('-o', '--output', default="-",
                         help='The output file name. "-" stands for stdout. ' +
-                             'Default is "-".')
+                        'Default is "-".')
     parser.add_argument('-w', '--what', default="bitequal",
                         help='determine what is searched. Valid values are ' +
-                             '"bitequal" for files which are equal ' +
-                             'bit-wise, "truncated" for files which are ' +
-                             'truncated (the larger files consists of the ' +
-                             'smaller file and some extra content ' +
-                             'afterwards) and "image" to search for similar ' +
-                             'images. Default is "bitequal".')
+                        '"bitequal" for files which are equal ' +
+                        'bit-wise, "truncated" for files which are ' +
+                        'truncated (the larger files consists of the ' +
+                        'smaller file and some extra content ' +
+                        'afterwards) and "image" to search for similar ' +
+                        'images. Default is "bitequal".')
     parser.add_argument('-s', '--min-similarity',
                         default=0.9,
                         help='require at least this image similarity. ' +
-                             'Default is "0.9".')
+                        'Default is "0.9".')
     parser.add_argument('-S', '--image-signature',
                         default=3,
                         help='Image signature to use. Valid is 1, 2, 3, 4 ' +
-                             'and 5. Default is "3".')
+                        'and 5. Default is "3".')
     parser.add_argument('-n', '--dry-run', action="store_true", dest='dry_run',
                         help='do not delete any files')
 

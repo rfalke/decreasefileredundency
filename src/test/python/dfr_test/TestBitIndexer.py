@@ -119,7 +119,7 @@ class Test(TestCase):
             with NoStderr():
                 indexer = BitIndexer(db.Database(db_fn, verbose=0), DO_NOT_MATCH_RE, DO_NOT_MATCH_RE, verbose_progress=1)
                 indexer.run([datadir])
-            self.assertTrue(True)
+            self.assert_no_exception()
 
     def test_unreadable_file(self):
         with TempDir() as tmpdir:
@@ -143,7 +143,7 @@ class Test(TestCase):
 
             def mock(*_):
                 error = IOError("dummy io error")
-                error.errno = errno.EBADFD
+                error.errno = errno.EHOSTUNREACH
                 raise error
 
             indexer.get_or_insert_content = mock
@@ -203,7 +203,7 @@ class Test(TestCase):
             indexer = BitIndexer(db.Database(db_fn, verbose=0), DO_NOT_MATCH_RE, DO_NOT_MATCH_RE,
                                  verbose_progress=0, commit_every=0.001, full_stats_every=0.001, dir_warn_threshold=0.001)
             indexer.run([datadir])
-            self.assertTrue(True)
+            self.assert_no_exception()
 
     def test_exclude(self):
         with TempDir(0) as tmpdir:

@@ -55,6 +55,9 @@ class TestCase(unittest.TestCase):
             self.assertTrue(i in actual_list, "The expected item %r was not found" % (i,))
         self.assertEqual(len(actual_list), len(expected_list))
 
+    def assert_no_exception(self):
+        pass
+
 
 class Devnull(object):
     def __init__(self, written):

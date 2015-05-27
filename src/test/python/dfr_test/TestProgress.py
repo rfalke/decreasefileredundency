@@ -17,7 +17,7 @@ class Test(TestCase):
                 time.sleep(0.1)
 
             prog.finish()
-        self.assertTrue(True)
+        self.assert_no_exception()
 
     def test_format(self):
         todo = 1000000000000
@@ -26,7 +26,7 @@ class Test(TestCase):
             time.sleep(1)
             prog.work(todo)
             prog.finish()
-        self.assertTrue(True)
+        self.assert_no_exception()
 
 if __name__ == '__main__':
     unittest.main()
