@@ -42,4 +42,4 @@ Might not work on windows when the files are still opened
         assert parts
         dirname = os.path.join(self.name, *parts)
         os.makedirs(dirname)
-        return dirname
+        return os.path.realpath(dirname)
